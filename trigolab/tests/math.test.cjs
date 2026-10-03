@@ -23,4 +23,21 @@ assert.equal(M.properties(M.parse('sen(0x)')).constant,true);
 assert.equal(M.properties(M.parse('0sen(x)')).period,null);
 for(const f of ['1e999','alert(1)','x;console.log(1)','sen(x','sen()','2**x','globalThis','sen x'])assert.throws(()=>M.parse(f));
 for(let i=-100;i<=100;i++){const x=i*.05;near(value('sen(x)^2+cos(x)^2',x),1);near(value('sen(2x)',x),value('2sen(x)cos(x)',x));near(value('cos(2x)',x),value('cos(x)^2-sen(x)^2',x));if(Math.abs(Math.cos(x))>1e-6)near(value('tan(x)',x),value('sen(x)/cos(x)',x));}
+// Recíprocas: secante, cosecante y cotangente, con sus alias.
+near(value('sec(x)',0),1);near(value('sec(x)',pi/3),2);near(value('cosec(x)',pi/6),2);near(value('csc(x)',30,'deg'),2);
+near(value('cotg(x)',pi/4),1);near(value('cot(x)',45,'deg'),1);near(value('ctg(x)',pi/4),1);near(value('2sec(x)',0),2);
+assert.equal(value('cotg(x)',pi/2),0);assert.equal(value('cotg(x)',90,'deg'),0);
+for(const unit of ['rad','deg']){
+ const half=unit==='rad'?pi/2:90,full=unit==='rad'?pi:180;
+ for(const f of ['sec(x)','sec(x)^2','1/cos(x)'])assert.ok(!Number.isFinite(value(f,half,unit)),f);
+ for(const f of ['cosec(x)','cotg(x)','cosec(x)^2','1/sen(x)','cos(x)/sen(x)'])for(const x of [0,full])assert.ok(!Number.isFinite(value(f,x,unit)),f);
+ assert.ok(!Number.isFinite(value('1/tan(x)',half,unit)));
+}
+for(const f of ['sec(x)','cosec(x)','cotg(x)','1+tan(x)^2'])assert.equal(M.properties(M.parse(f)),null);
+assert.throws(()=>M.parse('sec x'));
+// Pitagóricas derivadas y recíprocas, solo donde ambos lados están definidos.
+for(let i=-100;i<=100;i++){const x=i*.05,s=Math.abs(Math.sin(x))>1e-6,c=Math.abs(Math.cos(x))>1e-6;
+ if(c){near(value('1+tan(x)^2',x),value('sec(x)^2',x));near(value('sec(x)',x),value('1/cos(x)',x));}
+ if(s){near(value('1+cotg(x)^2',x),value('cosec(x)^2',x));near(value('cosec(x)',x),value('1/sen(x)',x));near(value('cotg(x)',x),value('cos(x)/sen(x)',x));}
+ if(s&&c)near(value('cotg(x)',x),value('1/tan(x)',x));}
 console.log('OK: parser, parámetros, grados/radianes, discontinuidades e identidades.');

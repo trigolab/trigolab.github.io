@@ -2,7 +2,13 @@
 const $=id=>document.getElementById(id),M=TrigoMath,PI=Math.PI;
 const names={sin:'sen',cos:'cos',tan:'tan'};
 let unit='rad',mode='explore',ast=M.parse('2sen(x)'),other=null,params={f:'sin',A:2,B:1,h:0,D:0},zoom=1,playing=false,phase=.5,lastTime=0,hoverX=null,score=0,solved=false,challengeIndex=0;
-const identities=[['sen(x)^2+cos(x)^2','1','Para todo x: la suma de los cuadrados del seno y del coseno vale 1.'],['tan(x)','sen(x)/cos(x)','Se cumple donde cos(x) ≠ 0. Ambos lados quedan indefinidos cuando cos(x) = 0.'],['sen(2x)','2sen(x)cos(x)','El seno de un ángulo doble se expresa como un producto.'],['cos(2x)','cos(x)^2-sen(x)^2','El coseno de un ángulo doble se expresa como una diferencia de cuadrados.']];
+const identities=[['sen(x)^2+cos(x)^2','1','Para todo x: la suma de los cuadrados del seno y del coseno vale 1.'],['tan(x)','sen(x)/cos(x)','Se cumple donde cos(x) ≠ 0. Ambos lados quedan indefinidos cuando cos(x) = 0.'],['sen(2x)','2sen(x)cos(x)','El seno de un ángulo doble se expresa como un producto.'],['cos(2x)','cos(x)^2-sen(x)^2','El coseno de un ángulo doble se expresa como una diferencia de cuadrados.'],
+ ['1+tan(x)^2','sec(x)^2','Sale de dividir sen²(x) + cos²(x) = 1 por cos²(x). Se cumple donde cos(x) ≠ 0; donde cos(x) = 0, ninguno de los dos lados está definido.'],
+ ['1+cotg(x)^2','cosec(x)^2','Sale de dividir sen²(x) + cos²(x) = 1 por sen²(x). Se cumple donde sen(x) ≠ 0; donde sen(x) = 0, ninguno de los dos lados está definido.'],
+ ['cosec(x)','1/sen(x)','La cosecante es la recíproca del seno. Está definida donde sen(x) ≠ 0.'],
+ ['sec(x)','1/cos(x)','La secante es la recíproca del coseno. Está definida donde cos(x) ≠ 0.'],
+ ['cotg(x)','1/tan(x)','La cotangente es la recíproca de la tangente donde las dos están definidas: sen(x) ≠ 0 y cos(x) ≠ 0. Donde cos(x) = 0, cotg(x) vale 0 pero 1/tan(x) no está definida. Por eso el comparador avisa que solo un lado está definido.'],
+ ['cotg(x)','cos(x)/sen(x)','Se cumple donde sen(x) ≠ 0. Ambos lados quedan indefinidos cuando sen(x) = 0.']];
 const challenges=[{f:'sin',A:3,B:2,h:0,D:0},{f:'cos',A:2,B:1,h:PI/2,D:1},{f:'sin',A:1,B:.5,h:-PI/2,D:-1},{f:'tan',A:1,B:2,h:PI/4,D:0},{f:'cos',A:4,B:2,h:PI,D:-2}];
 const round=v=>Math.abs(v)<1e-8?'0':Number(v.toFixed(3)).toString();
 function angle(v){if(v===null||!Number.isFinite(v))return '—';if(unit==='deg')return round(v)+'°';for(let d=1;d<=16;d++){const n=Math.round(v/PI*d);if(Math.abs(v-n*PI/d)<1e-6){if(!n)return '0';return (n<0?'−':'')+(Math.abs(n)===1?'':Math.abs(n))+'π'+(d===1?'':'/'+d);}}return round(v);}
