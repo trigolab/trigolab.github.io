@@ -2,7 +2,9 @@
 
 Laboratorio de funciones trigonométricas para estudiantes. Aplicación estática, sin cuentas de alumnos ni dependencias externas en ejecución.
 
-Destino previsto: organización **trigolab**, repositorio **trigolab.github.io**. La publicación se considera lista cuando GitHub Actions finaliza correctamente y se verifica la URL de Pages. El sitio de respaldo en Sites se conserva.
+Publicado en **https://trigolab.github.io** (organización **trigolab**, repositorio **trigolab.github.io**). El sitio de respaldo en Sites se conserva.
+
+Si trabajás con un asistente de código (Codex, Claude, etc.), las reglas que debe seguir están en [AGENTS.md](AGENTS.md).
 
 ## Trabajar y probar
 
@@ -22,20 +24,28 @@ En Windows las pruebas usan Chrome si está instalado en su ubicación habitual;
 
 ## Actualizar
 
-Abrir **esta carpeta `github-pages`** en VS Code, editar los archivos de `trigolab/` y ejecutar:
+Abrir **esta carpeta `github-pages`** en VS Code y editar los archivos de `trigolab/`.
+
+Forma recomendada (con revisión y pruebas antes de publicar):
 
 ```sh
+git switch main
+git pull --ff-only
+git switch -c mejora/descripcion-corta
+# ...editar y probar...
 git add .
 git commit -m "Describir la mejora"
-git push origin main
+git push -u origin mejora/descripcion-corta
 ```
 
-Cada push a `main` ejecuta las pruebas y publica si todas pasan. No editar `out/` directamente: se genera desde las fuentes. Si un workflow falla, el sitio anterior sigue publicado. En Settings → Pages, la fuente debe ser **GitHub Actions**.
+Después abrir el Pull Request en GitHub, esperar el check verde y hacer **Merge**. Al fusionarse en `main`, el sitio se publica solo.
 
-## Incorporar a ckfavaro
+Para un cambio chico también se puede subir directo a `main` (`git push origin main`): igual se ejecutan las pruebas y solo se publica si pasan.
 
-Yamila, como propietaria de la organización, puede ir a **trigolab → People → Invite member**, escribir `ckfavaro` y elegir **Owner** si desea que ambos administren toda la organización. La invitación debe aceptarse desde la cuenta de ckfavaro.
+No editar `out/` directamente: se genera desde las fuentes. Si un workflow falla, el sitio anterior sigue publicado. En Settings → Pages, la fuente debe ser **GitHub Actions**.
 
-Si solo quiere darle acceso a este proyecto, usar **repositorio → Settings → Collaborators and teams → Add people** y asignar **Write** para cambios de código o **Admin** para administrar el repositorio. No hace falta compartir contraseñas.
+## Accesos
+
+`ProfeYamila` es propietaria de la organización y `ckfavaro` es administrador. Para sumar a otra persona: **trigolab → People → Invite member** (toda la organización) o **repositorio → Settings → Collaborators and teams** (solo este proyecto). No hace falta compartir contraseñas.
 
 La aplicación original y su publicación en Sites no se actualizan automáticamente desde este repositorio.
