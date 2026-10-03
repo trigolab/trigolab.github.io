@@ -23,10 +23,10 @@ with sync_playwright() as pw:
     page.locator('#motion-position').fill('0.5625')
     page.locator('#focus-projections').click()
     assert not page.locator('#show-tan').is_checked()
-    page.locator('.motion-card').screenshot(path='artifacts/tema-oscuro.png')
+    page.locator('[aria-labelledby=motion-title]').screenshot(path='artifacts/tema-oscuro.png')
     page.locator('#theme').select_option('light')
     assert page.locator('html').get_attribute('data-theme') == 'light'
-    page.locator('.motion-card').screenshot(path='artifacts/tema-claro.png')
+    page.locator('[aria-labelledby=motion-title]').screenshot(path='artifacts/tema-claro.png')
     page.locator('#theme').select_option('system')
     page.emulate_media(color_scheme='dark')
     page.wait_for_function("document.documentElement.dataset.theme==='dark'")

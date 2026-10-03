@@ -21,17 +21,35 @@ with sync_playwright() as pw:
     assert 'f1(x) = sen(x) → 1' in legend
     assert 'f2(x) = 2sen(x) → 2' in legend
     assert 'f3(x) = sen(x)+1 → 2' in legend
+    assert '6.º AÑO' not in page.locator('header').inner_text()
+    page.locator('#multi-follow').select_option('1')
+    assert 'A = 2' in page.locator('#multi-rule').inner_text()
+    assert 'θ = 1.5708 rad' in page.locator('#multi-angle').inner_text()
+    still=page.locator('#multi-circle').evaluate('(c)=>c.toDataURL()')
+    page.locator('#multi-scene-play').click()
+    page.wait_for_timeout(300)
+    assert page.locator('#multi-circle').evaluate('(c)=>c.toDataURL()')!=still
+    assert page.locator('#multi-play').get_attribute('aria-pressed')=='true'
+    page.locator('#multi-position').fill('0.625')
+    assert page.locator('#multi-scene-play').get_attribute('aria-pressed')=='false'
     page.locator('#visible-1').uncheck()
+    assert page.locator('#multi-follow').input_value()=='0'
     assert 'f2(x)' not in page.locator('#multi-legend').inner_text()
     page.locator('#visible-1').check()
     formulas(['x^2','1/(x-1)','sen('])
     assert page.locator('#expression-2').get_attribute('aria-invalid')=='true'
     assert 'f1(x)' in page.locator('#multi-legend').inner_text()
+    assert 'expresión libre' in page.locator('#multi-rule').inner_text()
     formulas(['tan(x)','sen(x)/cos(x)',''])
+    assert 'no está definida' in page.locator('#multi-rule').inner_text()
     assert page.locator('#multi-legend').inner_text().count('No definida')==2
     page.locator('#multi-unit').select_option('deg')
     assert page.locator('#multi-legend').inner_text().count('No definida')==2
     formulas(['x^2','cos(x)','3sen(x-90)+2'])
+    page.locator('#multi-follow').select_option('2')
+    assert 'A = 3' in page.locator('#multi-rule').inner_text()
+    page.locator('#multi-zero').click()
+    assert 'θ = -90°' in page.locator('#multi-angle').inner_text()
     page.locator('#multi-fit').click()
     with page.expect_download() as result:page.locator('#multi-csv').click()
     result.value.save_as(str(root.parent/'artifacts/comparacion.csv'))
@@ -50,6 +68,11 @@ with sync_playwright() as pw:
     page.set_viewport_size({'width':390,'height':844})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.locator('#compare-mode').screenshot(path=str(root.parent/'artifacts/comparador-celular.png'))
+    page.locator('#theme').select_option('dark')
+    page.locator('.comparison-motion').screenshot(path=str(root.parent/'artifacts/manivela-oscuro-celular.png'))
+    with page.expect_download() as result:page.locator('#multi-png').click()
+    result.value.save_as(str(root.parent/'artifacts/comparacion-oscuro.png'))
+    page.locator('#theme').select_option('light')
     page.locator('[data-mode=explore]').click()
     assert page.locator('#formula').is_visible()
     page.locator('[data-mode=formulas]').click()

@@ -29,8 +29,8 @@
   function line(c,x1,y1,x2,y2,color,width=1,dash=[]) {c.strokeStyle=ink(color);c.lineWidth=width;c.setLineDash(dash);c.beginPath();c.moveTo(x1,y1);c.lineTo(x2,y2);c.stroke();c.setLineDash([]);}
   function dot(c,x,y,color,r=5) {c.fillStyle=ink(color);c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();}
   function text(c,value,x,y,color='#b6c1d9',align='center') {c.fillStyle=ink(color);c.textAlign=align;c.fillText(value,x,y);}
-  function circle(theta, raw) {
-    const s=surface('circle-scene');if(!s)return;
+  function circle(theta, raw, target = 'circle-scene', showTan = visible.tan) {
+    const s=surface(target);if(!s)return;
     const {c,w,h}=s, r=Math.min(76,w*.25),cx=w*.49,cy=h*.47;
     line(c,18,cy,w-15,cy,'#45526d');line(c,cx,28,cx,h-35,'#45526d');
     c.strokeStyle=ink('#9daac5');c.lineWidth=1.5;c.beginPath();c.arc(cx,cy,r,0,2*Math.PI);c.stroke();
@@ -41,8 +41,8 @@
     line(c,cx,cy,px,py,'#f0f3ff',2);
     const normalized=((theta%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
     c.strokeStyle=ink('#f4d989');c.beginPath();c.arc(cx,cy,22,-normalized,0);c.stroke();text(c,'θ',cx+28,cy-13,'#f4d989');
-    if(visible.tan)line(c,cx+r,24,cx+r,h-32,'#ffb16970',1,[4,5]);
-    if(visible.tan&&Number.isFinite(raw.tan)) {
+    if(showTan)line(c,cx+r,24,cx+r,h-32,'#ffb16970',1,[4,5]);
+    if(showTan&&Number.isFinite(raw.tan)) {
       const actualY=cy-r*raw.tan,ty=Math.max(25,Math.min(h-33,actualY));
       c.save();c.beginPath();c.rect(0,25,w,h-58);c.clip();
       line(c,cx,cy,cx+r,actualY,colors.tan,1,[3,4]);line(c,cx+r,cy,cx+r,actualY,colors.tan,3);c.restore();
@@ -169,5 +169,5 @@
     });
     new ResizeObserver(()=>{if(state)render(state);}).observe(el('motion-visuals'));
   }
-  window.TrigoMotion={init,render,compose,getState:()=>state,seek:value=>actions.seek(value),play:()=>actions.play(),setTheme:value=>{light=value==='light';Object.assign(colors,light?{sin:'#7042c1',cos:'#007e78',tan:'#b95206'}:{sin:'#ba9cff',cos:'#54ddd0',tan:'#ffb169'});if(state)render(state);}};
+  window.TrigoMotion={init,render,compose,drawCircle:(target,theta,showTan)=>circle(theta,{sin:Math.sin(theta),cos:Math.cos(theta),tan:Math.abs(Math.cos(theta))<1e-14?NaN:Math.tan(theta)},target,showTan),getState:()=>state,seek:value=>actions.seek(value),play:()=>actions.play(),setTheme:value=>{light=value==='light';Object.assign(colors,light?{sin:'#7042c1',cos:'#007e78',tan:'#b95206'}:{sin:'#ba9cff',cos:'#54ddd0',tan:'#ffb169'});if(state)render(state);}};
 })();
