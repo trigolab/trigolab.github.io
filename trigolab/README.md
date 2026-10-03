@@ -16,6 +16,7 @@ No hace falta `npm install`. Con Node instalado, `npm test` ejecuta las pruebas 
 
 - Fórmulas editables: `2sen(x)`, `cos(2x)`, `3sen(2x-pi)+1`, `tan(x/2)`, `sen(x)^2+cos(x)^2`.
 - Operaciones `+ - * / ^`, multiplicación implícita, números con punto decimal, `x`, `pi` o `π`; aliases `sin`, `sen`, `tan`, `tg`.
+- Secante, cosecante y cotangente: `sec(x)`, `cosec(x)` (o `csc`) y `cotg(x)` (o `cot`, `ctg`). Quedan sin definir donde se anula su denominador.
 - Controles para A, B, h y D en `A·función(B·(x-h))+D`.
 - Grados y radianes; comparación con la función base; acercar y alejar el eje horizontal.
 - Escenario animado con un personaje propio, círculo unitario y seno, coseno y tangente simultáneos. Comparte A, B, h, D, unidades y reloj con el gráfico.
@@ -24,12 +25,16 @@ No hace falta `npm install`. Con Node instalado, `npm test` ejecuta las pruebas 
 - Punto animado que recorre la curva y muestra sus coordenadas. El cursor también permite inspeccionar puntos.
 - Amplitud, período, desfasaje y línea media para una única función trigonométrica con transformaciones lineales.
 - Asíntotas verticales para tangente en esa forma; sus ramas no se unen a través de las discontinuidades.
-- Cuatro identidades predefinidas, con campos editables para comparar otras expresiones.
+- Diez identidades predefinidas, con campos editables para comparar otras expresiones:
+  - Pitagóricas: `sen²(x) + cos²(x) = 1`, `1 + tan²(x) = sec²(x)` y `1 + cotg²(x) = cosec²(x)`.
+  - Recíprocas: `cosec(x) = 1/sen(x)`, `sec(x) = 1/cos(x)` y `cotg(x) = 1/tan(x)`.
+  - De cociente: `tan(x) = sen(x)/cos(x)` y `cotg(x) = cos(x)/sen(x)`.
+  - Ángulo doble: `sen(2x) = 2 sen(x) cos(x)` y `cos(2x) = cos²(x) − sen²(x)`.
 - Cinco desafíos de construcción de funciones, con comprobación y contador por sesión.
 - Tabla de valores, exportación CSV y descarga PNG de la gráfica.
 - Diseño adaptable a computadora y celular; guía integrada.
 
-Los indicadores automáticos se calculan para `A·sen(Bx+C)+D`, `A·cos(Bx+C)+D` y `A·tan(Bx+C)+D`. Otras expresiones se grafican, pero no se les asignan automáticamente esos indicadores. Mover un control reemplaza una expresión libre por la función de los controles.
+Los indicadores automáticos se calculan para `A·sen(Bx+C)+D`, `A·cos(Bx+C)+D` y `A·tan(Bx+C)+D`. Otras expresiones, incluidas secante, cosecante y cotangente, se grafican, pero no se les asignan automáticamente esos indicadores. Mover un control reemplaza una expresión libre por la función de los controles.
 
 ## 3. Precisiones para enseñar
 
@@ -55,6 +60,8 @@ Los indicadores automáticos se calculan para `A·sen(Bx+C)+D`, `A·cos(Bx+C)+D`
 **Tangente — 10 min.** Probar `tan(x)` y `2tan(x)`. Preguntar por qué no puede usarse la misma idea de amplitud. Identificar las asíntotas y los valores excluidos.
 
 **Identidades — 15 min.** Comparar la identidad fundamental y `tan(x)=sen(x)/cos(x)`. Explicar por qué en la segunda hay valores excluidos. La observación se acompaña de la justificación trabajada en clase.
+
+Para ampliar: obtener `1 + tan²(x) = sec²(x)` y `1 + cotg²(x) = cosec²(x)` dividiendo la identidad fundamental por cos²(x) y por sen²(x). Comparar `cotg(x) = 1/tan(x)`: el comparador avisa que en algunos puntos solo un lado está definido. Discutir por qué: donde cos(x) = 0, cotg(x) vale 0 pero tan(x) no existe.
 
 **Cierre — 10 min.** Resolver un desafío y entregar una captura con tres frases: qué cambió la altura, qué cambió el período y hacia dónde desplazaron la función.
 

@@ -23,10 +23,11 @@
   function connected(n,a,b){
     if(n.t==='fn'){
       if(!connected(n.a,a,b))return false;
-      if(n.f==='tan'){
-        const scale=unit==='deg'?Math.PI/180:1;
+      // tan y sec se cortan donde cos = 0; cosec y cotg, donde sen = 0.
+      if(n.f!=='sin'&&n.f!=='cos'){
+        const scale=unit==='deg'?Math.PI/180:1,offset=n.f==='tan'||n.f==='sec'?Math.PI/2:0;
         const u=M.evaluate(n.a,a,unit)*scale,v=M.evaluate(n.a,b,unit)*scale;
-        if(Math.floor((u-Math.PI/2)/Math.PI)!==Math.floor((v-Math.PI/2)/Math.PI))return false;
+        if(Math.floor((u-offset)/Math.PI)!==Math.floor((v-offset)/Math.PI))return false;
       }return true;
     }
     if(n.t==='op'){

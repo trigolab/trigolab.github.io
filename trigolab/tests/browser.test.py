@@ -41,6 +41,15 @@ with sync_playwright() as pw:
     result=page.locator('#identity-result').inner_text()
     assert 'solo uno' not in result, result
     assert 'indefinido' in result, result
+    # Todas las identidades del menú coinciden; cotg = 1/tan avisa que en cos(x) = 0 solo cotg está definida.
+    for unit in ['rad','deg']:
+        page.locator('#'+unit).click()
+        for value in page.locator('#identity-choice option').evaluate_all('o=>o.map(e=>e.value)'):
+            page.locator('#identity-choice').select_option(value)
+            result=page.locator('#identity-result').inner_text()
+            assert 'coinciden' in result and page.locator('#identity-error').inner_text()=='', (unit,value,result)
+            assert ('solo uno' in result)==(value=='8'), (unit,value,result)
+    page.locator('#rad').click()
     page.locator('button[data-mode=explore]').click()
     page.locator('#formula').fill('sen(')
     page.locator('#formula-form button').click()
