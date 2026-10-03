@@ -96,12 +96,12 @@ with sync_playwright() as pw:
     with page.expect_download() as result:
         page.locator('#motion-save').click()
     result.value.save_as('artifacts/escenario.png')
-    page.locator('.motion-card').screenshot(path='artifacts/escenario-escritorio.png')
+    page.locator('[aria-labelledby=motion-title]').screenshot(path='artifacts/escenario-escritorio.png')
     for width in [360,390,768]:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.set_viewport_size({'width':390,'height':844})
-    page.locator('.motion-card').screenshot(path='artifacts/escenario-celular.png')
+    page.locator('[aria-labelledby=motion-title]').screenshot(path='artifacts/escenario-celular.png')
     page.set_viewport_size({'width':1440,'height':1000})
     page.locator('#play').click()
     initial=page.locator('#point').inner_text()
