@@ -1,0 +1,10 @@
+{
+  "name": "trigolab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Laboratorio de funciones trigonométricas para secundaria, sin dependencias.",
+  "scripts": {
+    "test": "node tests/math.test.cjs",
+    "start": "python servidor.py"
+  }
+}

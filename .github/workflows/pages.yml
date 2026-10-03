@@ -1,0 +1,61 @@
+name: Probar y publicar TrigoLab
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar herramientas de prueba
+        run: |
+          python -m pip install -r requirements-dev.txt
+          python -m playwright install --with-deps chromium
+      - name: Preparar archivos web
+        run: python prepare_web.py
+      - name: Pruebas matemáticas
+        run: node trigolab/tests/math.test.cjs
+      - name: Pruebas de navegador y servidor
+        run: python run_tests.py
+      - name: Guardar evidencia de las pruebas
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pruebas-trigolab
+          path: artifacts/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Preparar publicación
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Publicar en GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

@@ -1,0 +1,17 @@
+artifacts/
+*.zip
+*.mp4
+*.webm
+.local-tools/
+node_modules/
+__pycache__/
+*.py[cod]
+*.tmp
+*.temp
+*.log
+.DS_Store
+Thumbs.db
+out/
+.openai/
+.env
+.env.*
