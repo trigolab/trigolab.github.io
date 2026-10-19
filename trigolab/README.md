@@ -1,6 +1,6 @@
 # TrigoLab — Matemática en movimiento
 
-Aplicación local en español para explorar seno, coseno y tangente en 6.º año. No requiere cuenta, internet, servidor de datos ni bibliotecas externas. El código se puede editar en Visual Studio Code y versionar en GitHub.
+Aplicación local en español para explorar seno, coseno y tangente. No requiere cuenta, internet, servidor de datos ni bibliotecas externas. El código se puede editar en Visual Studio Code y versionar en GitHub.
 
 ## 1. Abrir y ejecutar
 
