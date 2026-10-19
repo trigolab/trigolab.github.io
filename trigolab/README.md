@@ -17,7 +17,7 @@ No hace falta `npm install`. Con Node instalado, `npm test` ejecuta las pruebas 
 - Fórmulas editables: `2sen(x)`, `cos(2x)`, `3sen(2x-pi)+1`, `tan(x/2)`, `sen(x)^2+cos(x)^2`.
 - Operaciones `+ - * / ^`, multiplicación implícita, números con punto decimal, `x`, `pi` o `π`; aliases `sin`, `sen`, `tan`, `tg`.
 - Secante, cosecante y cotangente: `sec(x)`, `cosec(x)` (o `csc`) y `cotg(x)` (o `cot`, `ctg`). Quedan sin definir donde se anula su denominador.
-- Controles para A, B, h y D en `A·función(B·(x-h))+D`.
+- Controles para A, B, h y D en `A·función(B·(x-h))+D`. Debajo de cada control se lee en vivo qué propiedad cambia (amplitud o escala vertical, período, desplazamiento, línea media) y el indicador modificado se resalta.
 - Grados y radianes; comparación con la función base; acercar y alejar el eje horizontal.
 - Escenario animado con un personaje propio, círculo unitario y seno, coseno y tangente simultáneos. Comparte A, B, h, D, unidades y reloj con el gráfico.
 - Pausa, recorrido manual con teclado o deslizador, curvas que se pueden ocultar y descarga PNG del escenario.

@@ -18,19 +18,32 @@ function writeFormula(){const h=numeric(params.h),inner=h===0?'x':`(x${h<0?'+':'
 function makeSliders(){
  $('sliders').innerHTML='';
  for(const [key,label,min,max,step,help] of [['A','A · escala vertical',-4,4,.25,'En seno y coseno, amplitud = |A|.'],['B','B · frecuencia',-4,4,.25,'Mayor |B| → período más corto. B = 0 da una constante.'],['h','h · desfasaje',unit==='rad'?-2*PI:-360,unit==='rad'?2*PI:360,unit==='rad'?PI/12:15,'h > 0: derecha. h < 0: izquierda.'],['D','D · traslado vertical',-4,4,.25,'Mueve la línea media hacia arriba o abajo.']]){
- const div=document.createElement('div');div.className='slider';div.innerHTML=`<label for="slider-${key}">${label}<output id="out-${key}"></output></label><input id="slider-${key}" type="range" min="${Math.min(min,params[key])}" max="${Math.max(max,params[key])}" step="${step}" value="${params[key]}"><small>${help}</small>`;$('sliders').append(div);
+ const div=document.createElement('div');div.className='slider';div.innerHTML=`<label for="slider-${key}">${label}<output id="out-${key}"></output></label><input id="slider-${key}" type="range" min="${Math.min(min,params[key])}" max="${Math.max(max,params[key])}" step="${step}" value="${params[key]}" aria-describedby="effect-${key}"><small>${help}</small><small class="effect" id="effect-${key}"></small>`;$('sliders').append(div);
  $('slider-'+key).addEventListener('input',e=>{params[key]=Number(e.target.value);updateFromControls();});
  }
  $('kind').value=params.f;updateOutputs();
 }
-function updateOutputs(){for(const key of ['A','B','h','D'])$('out-'+key).textContent=key==='h'?angle(params[key]):round(params[key]);}
+// Lectura en vivo: qué propiedad de la gráfica cambia cada control, con la misma fórmula que los indicadores.
+function describeEffects(){
+ const {f,A,B,h,D}=params,tan=f==='tan',turn=unit==='deg'?360:2*PI,base=unit==='deg'?(tan?'180°':'360°'):(tan?'π':'2π');
+ return {
+  A:A===0?`A = 0: queda la constante y = ${round(D)}.`:(tan?`Escala vertical |A| = ${round(Math.abs(A))}. La tangente no tiene amplitud.`:`Amplitud |A| = ${round(Math.abs(A))}.`)+(A<0?' A negativo refleja la gráfica respecto de y = D.':''),
+  B:B===0?'B = 0: no hay onda, la expresión es constante.':`Período = ${base} / ${round(Math.abs(B))} = ${angle((tan?turn/2:turn)/Math.abs(B))}.`+(B<0?' B negativo refleja la gráfica horizontalmente.':''),
+  h:Math.abs(h)<1e-8?'Sin desplazamiento horizontal.':`Se corre ${angle(Math.abs(h))} hacia la ${h>0?'derecha':'izquierda'}.`,
+  D:tan?`Traslado vertical: las ramas se centran en y = ${round(D)}.`:`Línea media y = ${round(D)}.`
+ };
+}
+function updateOutputs(){const effects=describeEffects();for(const key of ['A','B','h','D']){$('out-'+key).textContent=key==='h'?angle(params[key]):round(params[key]);$('effect-'+key).textContent=effects[key];}}
+// Resalta los indicadores cuyo valor cambió para conectar el control con la propiedad.
+let lastMetrics=null;
+function markChangedMetrics(){const tiles=[...$('metrics').children],values=tiles.map(t=>t.querySelector('strong').textContent);if(lastMetrics&&lastMetrics.length===values.length)tiles.forEach((t,i)=>{if(values[i]!==lastMetrics[i])t.classList.add('changed');});lastMetrics=values;}
 function updateFromControls(){ast=M.parse(writeFormula());$('formula').value=writeFormula();$('error').textContent='';updateOutputs();refresh();}
 function parseFormula(){try{const next=M.parse($('formula').value);const props=M.properties(next,unit);ast=next;if(props){params={f:props.f,A:props.A,B:props.B,C:props.C,h:props.shift??0,D:props.D};makeSliders();}$('error').textContent='';phase=0;refresh();}catch(e){$('error').textContent=e.message;}}
 $('formula-form').addEventListener('submit',e=>{e.preventDefault();parseFormula();});$('kind').onchange=()=>{params.f=$('kind').value;updateFromControls();};$('base').onchange=refresh;
 $('reset').onclick=()=>{params={f:'sin',A:1,B:1,h:0,D:0};zoom=1;phase=0;makeSliders();updateFromControls();};
 function setUnit(next){if(next===unit)return;const p=M.properties(ast,unit);const scale=next==='deg'?180/PI:PI/180;unit=next;if(p){params={f:p.f,A:p.A,B:p.B,C:p.C*scale,h:(p.shift??0)*scale,D:p.D};const formula=p.B===0?`${p.A}*${names[p.f]}(${numeric(p.C*scale)})${p.D<0?'-':'+'}${Math.abs(p.D)}`:writeFormula();ast=M.parse(formula);$('formula').value=formula;}else {params.h*=scale;$('error').textContent='Esta expresión libre conserva lo escrito al cambiar de unidad. Revisá sus constantes angulares.';}makeSliders();$('rad').classList.toggle('selected',unit==='rad');$('deg').classList.toggle('selected',unit==='deg');if(mode==='identity')compare();renderTarget();hoverX=null;refresh();}
 $('rad').onclick=()=>setUnit('rad');$('deg').onclick=()=>setUnit('deg');
-for(const button of document.querySelectorAll('nav button'))button.onclick=()=>{mode=button.dataset.mode;document.querySelector('.layout').hidden=mode==='formulas';$('compare-mode').hidden=mode!=='formulas';if(mode==='formulas'){playing=false;$('play').textContent='▶ Animar';}for(const b of document.querySelectorAll('nav button'))b.classList.toggle('active',b===button);for(const id of ['explore','identity','challenge'])$(id).hidden=(id==='explore'?mode==='identity':id!==mode);hoverX=null;if(mode==='identity')loadIdentity();refresh();};
+for(const button of document.querySelectorAll('nav button'))button.onclick=()=>{mode=button.dataset.mode;document.querySelector('.layout').hidden=mode==='formulas';$('compare-mode').hidden=mode!=='formulas';if(mode==='formulas'){playing=false;$('play').textContent='▶ Animar';}for(const b of document.querySelectorAll('nav button')){b.classList.toggle('active',b===button);if(b===button)b.setAttribute('aria-current','true');else b.removeAttribute('aria-current');}for(const id of ['explore','identity','challenge'])$(id).hidden=(id==='explore'?mode==='identity':id!==mode);hoverX=null;if(mode==='identity')loadIdentity();refresh();};
 function loadIdentity(){const [a,b,text]=identities[Number($('identity-choice').value)];$('left').value=a;$('right').value=b;$('identity-text').textContent=text;compare();}
 $('identity-choice').onchange=loadIdentity;
 let identityLeft=null;
@@ -52,7 +65,7 @@ function refresh(){
  const turn=unit==='deg'?180:PI,exclude=p.f==='tan'?`Dominio: todos los valores salvo x = ${angle(p.shift)} + (${angle(turn/2)} + k·${angle(turn)}) / ${round(p.B)}, con k entero. Imagen: todos los reales. Las líneas discontinuas son asíntotas verticales.`:`Dominio: todos los reales. Imagen: [${round(p.D-p.amplitude)}, ${round(p.D+p.amplitude)}].`;
  $('explanation').innerHTML='<h3>Leé lo que cambió</h3><p>'+escapeHTML(exclude)+'</p><p>'+escapeHTML(p.f==='tan'?'La tangente no tiene máximos ni mínimos y no tiene amplitud. El factor A modifica la escala de cada rama.':`La altura desde la línea media es ${round(p.amplitude)}. La curva se repite cada ${angle(p.period)}.`)+'</p><p>'+escapeHTML(p.A<0?'A negativo refleja verticalmente la curva respecto de y = D. ':'')+escapeHTML('En A·f(Bx+C)+D, el desfasaje es h = −C/B. Los desplazamientos que difieren en un período producen la misma gráfica.')+'</p>';
  }
- buildTable();draw();
+ markChangedMetrics();buildTable();draw();
 }
 function bounds(){const p=M.properties(activeAst(),unit);const half=(unit==='deg'?360:2*PI)*zoom;let y=3;const constantValue=M.evaluate(activeAst(),0,unit);if((p?.constant||M.linear(activeAst())?.[0]===0)&&Number.isFinite(constantValue))y=Math.max(y,Math.abs(constantValue)+1);if(p&&!p.constant&&p.f!=='tan')y=Math.max(3,Math.abs(p.D)+p.amplitude+1);if(p&&p.f==='tan')y=Math.max(4,Math.abs(p.D)+Math.abs(p.A)*2);return {xmin:-half,xmax:half,ymin:-y,ymax:y};}
 const canvas=$('graph'),ctx=canvas.getContext('2d');let width=800,height=380;

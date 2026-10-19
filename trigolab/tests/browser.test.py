@@ -21,18 +21,41 @@ with sync_playwright() as pw:
         page.locator('#formula').fill(text)
         page.locator('#formula-form button').click()
         assert page.locator('#error').inner_text()==''
+    assert 'Explorá' in page.locator('nav button[aria-current=true]').inner_text()
     formula('3sen(2x-pi)+1')
     assert '3' in page.locator('#metrics').inner_text()
+    # Lectura en vivo de cada control: período 2π/2 = π y desfasaje π/2 a la derecha, también en grados.
+    assert '= π.' in page.locator('#effect-B').inner_text()
+    assert 'π/2 hacia la derecha' in page.locator('#effect-h').inner_text()
+    assert 'Amplitud |A| = 3' in page.locator('#effect-A').inner_text()
+    assert 'Línea media y = 1' in page.locator('#effect-D').inner_text()
     page.locator('#deg').click()
     assert '90°' in page.locator('#metrics').inner_text()
+    assert '= 180°.' in page.locator('#effect-B').inner_text()
+    assert '90° hacia la derecha' in page.locator('#effect-h').inner_text()
     page.locator('#rad').click()
+    # Al mover solo A cambia un indicador (amplitud) y se resalta; con movimiento reducido no hay animación.
+    page.locator('#slider-A').fill('4')
+    assert page.locator('.metric.changed').count()==1
+    assert 'Amplitud' in page.locator('.metric.changed').inner_text()
+    page.emulate_media(reduced_motion='reduce')
+    page.locator('#slider-A').fill('2')
+    assert page.evaluate("getComputedStyle(document.querySelector('.metric.changed')).animationName")=='none'
+    page.emulate_media(reduced_motion='no-preference')
+    page.locator('#kind').select_option('tan')
+    assert 'no tiene amplitud' in page.locator('#effect-A').inner_text()
+    assert '= π/2.' in page.locator('#effect-B').inner_text()
+    page.locator('#kind').select_option('sin')
     formula('2sen(0x+pi/2)+1')
+    assert 'B = 0' in page.locator('#effect-B').inner_text()
     page.locator('#slider-A').fill('3')
     assert abs(page.evaluate('M.evaluate(ast,0,unit)')-4)<1e-10
     formula('cos(0x)+10')
     assert page.evaluate('bounds().ymax')>=12
     page.locator('button[data-mode=challenge]').click()
     assert page.locator('#formula').is_visible()
+    assert 'Desafíos' in page.locator('nav button[aria-current=true]').inner_text()
+    assert page.locator('nav button[aria-current=true]').count()==1
     formula('3sen(2x)')
     page.locator('#check-challenge').click()
     assert 'Lo lograste' in page.locator('#feedback').inner_text()

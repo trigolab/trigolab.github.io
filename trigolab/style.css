@@ -37,3 +37,12 @@
 
 .comparison-scene{display:grid;grid-template-columns:minmax(220px,320px) minmax(0,1fr);gap:24px;align-items:center}.comparison-scene canvas{width:100%;height:270px}.comparison-scene>div{min-width:0}.comparison-scene p{overflow-wrap:anywhere}.comparison-scene select{max-width:260px}.comparison-scene .motion-controls label{margin-left:0}.comparison-motion{margin-top:24px}
 @media(max-width:760px){.comparison-scene{grid-template-columns:1fr;gap:8px}.comparison-scene canvas{max-width:340px;margin:auto}.comparison-scene .motion-controls{gap:8px}}
+
+/* Lectura en vivo de los controles y resalte del indicador que cambió. Sin movimiento: solo color. */
+.slider .effect{display:block;margin-top:6px;font-size:12px;line-height:1.5;color:var(--purple);font-weight:600}
+.metric span{font-size:11px}
+.metric.changed{animation:metric-pulse 1s ease-out}
+@keyframes metric-pulse{0%{background:#ebe5fd;border-color:var(--purple)}100%{background:white;border-color:var(--line)}}
+[data-theme=dark] .metric.changed{animation-name:metric-pulse-dark}
+@keyframes metric-pulse-dark{0%{background:#3a2f66;border-color:var(--purple)}100%{background:#17243a;border-color:var(--line)}}
+@media(prefers-reduced-motion:reduce){.metric.changed{animation:none;border-color:var(--purple)}}
