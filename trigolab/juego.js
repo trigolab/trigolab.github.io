@@ -1,14 +1,16 @@
 /* Modo Juego: la hélice. Un punto gira y avanza en el tiempo; su sombra de costado es el seno y desde arriba, el coseno.
-   El alumno ajusta A, B, h y D para atravesar los aros. Se carga solo al entrar al modo. Vista 3D con Three.js (vendor/) y vista 2D en canvas. */
+   El alumno ajusta A, B, h y D para atravesar los aros. Se carga solo al entrar al modo. Vista 3D con Three.js (vendor/) y vista 2D en canvas.
+   Rendimiento: la geometría de la hélice se reconstruye solo cuando cambian los parámetros; en cada cuadro del lanzamiento
+   únicamente se mueve la bolita, se colorean los aros alcanzados y se dibuja. */
 import * as THREE from './vendor/three.min.js';
 
 const el=id=>document.getElementById(id),PI=Math.PI,TWO=2*PI;
-const LENGTH=12,SCALE=LENGTH/(2*TWO),WALL=4.5,RING_RADIUS=.34,RINGS=7;
+const LENGTH=12,SCALE=LENGTH/(2*TWO),WALL=4.5,RING_RADIUS=.34,RINGS=7,CURVE_POINTS=240;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)');
 const dark=()=>document.documentElement.dataset.theme==='dark';
 const theme=()=>dark()
  ?{bg:'#0f1a2e',grid:'#2a3a5c',gridCenter:'#3b4d74',helix:'#b79af7',sine:'#54ddd0',cosine:'#ffb169',ball:'#f4d989',ring:'#7c8db3',hit:'#4ade80',miss:'#f87171',circle:'#8f7ad6',text:'#b0bdd5',axis:'#5c6c8c'}
- :{bg:'#eef1f8',grid:'#d3d9e8',gridCenter:'#b9c2d8',helix:'#6c46df',sine:'#007e78',cosine:'#b95206',ball:'#d98a00',ball2:'#f59d38',ring:'#8a95ad',hit:'#15803d',miss:'#c53652',circle:'#9a86e0',text:'#4c5c75',axis:'#939eb2'};
+ :{bg:'#eef1f8',grid:'#d3d9e8',gridCenter:'#b9c2d8',helix:'#6c46df',sine:'#007e78',cosine:'#b95206',ball:'#d98a00',ring:'#8a95ad',hit:'#15803d',miss:'#c53652',circle:'#9a86e0',text:'#4c5c75',axis:'#939eb2'};
 
 const round=v=>Math.abs(v)<1e-8?'0':Number(v.toFixed(2)).toString();
 function angle(v){for(let d=1;d<=12;d++){const n=Math.round(v/PI*d);if(Math.abs(v-n*PI/d)<1e-6){if(!n)return '0';return (n<0?'−':'')+(Math.abs(n)===1?'':Math.abs(n))+'π'+(d===1?'':'/'+d);}}return round(v);}
@@ -24,6 +26,9 @@ const LEVELS=[
 ];
 const pick=list=>list[Math.floor(Math.random()*list.length)];
 const START={A:1,B:1,h:0,D:0};
+const levelFree=level=>level<LEVELS.length?LEVELS[level].free:['A','B','h','D'];
+const levelTitle=level=>level<LEVELS.length?LEVELS[level].title:`Nivel ${level+1} · Al azar`;
+const levelIntro=level=>level<LEVELS.length?LEVELS[level].intro:'Todos los parámetros libres y un objetivo nuevo cada vez.';
 function makeTarget(level){
  const free=levelFree(level);
  for(let tries=0;tries<50;tries++){
@@ -32,51 +37,110 @@ function makeTarget(level){
  }
  return {A:2,B:1,h:0,D:0};
 }
-const levelFree=level=>level<LEVELS.length?LEVELS[level].free:['A','B','h','D'];
-const levelTitle=level=>level<LEVELS.length?LEVELS[level].title:`Nivel ${level+1} · Al azar`;
-const levelIntro=level=>level<LEVELS.length?LEVELS[level].intro:'Todos los parámetros libres y un objetivo nuevo cada vez.';
 
-let level=0,target=null,player={...START},launches=0,hits=[],solved=false,view3d=true,best={};
+let level=0,target=null,player={...START},launches=0,hits=[],solved=false,view3d=true,best={},ballT=-TWO;
 try{best=JSON.parse(localStorage.getItem('trigolab-juego')||'{}')||{};}catch{best={};}
 const totalStars=()=>Object.values(best).reduce((a,b)=>a+b,0);
 
+/* ---------- Sonido: tonos sintetizados, sin archivos. Cada aro es una nota más aguda de la escala. ---------- */
+let audio=null,muted=false;
+try{muted=localStorage.getItem('trigolab-sonido')==='off';}catch{}
+function audioContext(){
+ if(muted)return null;
+ if(!audio){try{audio=new (window.AudioContext||window.webkitAudioContext)();}catch{return null;}}
+ if(audio.state==='suspended')audio.resume().catch(()=>{});
+ return audio;
+}
+function tone(freq,duration,type='sine',gain=.16,when=0){
+ const ctx=audioContext();if(!ctx)return;
+ const osc=ctx.createOscillator(),vol=ctx.createGain(),t=ctx.currentTime+when;
+ osc.type=type;osc.frequency.setValueAtTime(freq,t);
+ vol.gain.setValueAtTime(0,t);vol.gain.linearRampToValueAtTime(gain,t+.012);vol.gain.exponentialRampToValueAtTime(.0001,t+duration);
+ osc.connect(vol).connect(ctx.destination);osc.start(t);osc.stop(t+duration+.05);
+}
+const NOTES=[523.25,587.33,659.25,698.46,783.99,880,987.77];
+const hitSound=k=>{tone(NOTES[k],.38,'sine',.16);tone(NOTES[k]*2,.22,'triangle',.04);};
+const missSound=()=>tone(150,.22,'triangle',.07);
+const winSound=()=>[523.25,659.25,783.99,1046.5].forEach((f,i)=>tone(f,.7,'sine',.11,.15+i*.1));
+function setMuted(next){
+ muted=next;try{localStorage.setItem('trigolab-sonido',muted?'off':'on');}catch{}
+ const button=el('game-sound');button.setAttribute('aria-pressed',String(!muted));button.textContent=muted?'Sonido apagado':'Sonido activado';
+}
+
 /* ---------- Tres dimensiones ---------- */
-let renderer=null,scene=null,camera=null,helixMesh=null,sineLine=null,cosineLine=null,circleLine=null,radiusLine=null,ball=null,sineDot=null,cosineDot=null,ringMeshes=[],floorGrid=null,wallGrid=null,spherical=null,lookAt=null,frame=0,needsRender=true,animating=null;
+let renderer=null,scene=null,camera=null,helixMesh=null,sineLine=null,cosineLine=null,circleLine=null,radiusLine=null,ball=null,sineDot=null,cosineDot=null,ringMeshes=[],floorGrid=null,wallGrid=null,spherical=null,lookAt=null,frame=0,needsRender=true,animating=null,gridTheme=null,helixTheme=null;
 class Helix extends THREE.Curve{constructor(p){super();this.p=p;}getPoint(u,optionalTarget=new THREE.Vector3()){const t=-TWO+2*TWO*u,v=value(this.p,t);return optionalTarget.set(v.x,v.y,t*SCALE);}}
 function webglAvailable(){try{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'));}catch{return false;}}
 function setup3d(){
  const canvas=el('game-gl');
- renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'low-power'});
- renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;
+ renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+ renderer.outputColorSpace=THREE.SRGBColorSpace;
  scene=new THREE.Scene();
  camera=new THREE.PerspectiveCamera(42,1,.1,100);
  lookAt=new THREE.Vector3(0,-.4,0);spherical=new THREE.Spherical(17,1.1,-.75);
  scene.add(new THREE.HemisphereLight(0xffffff,0x334466,.9));
  const sun=new THREE.DirectionalLight(0xffffff,1.1);sun.position.set(6,10,8);scene.add(sun);
- grids();
- const lineGeometry=()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(3*241),3));return g;};
- sineLine=new THREE.Line(lineGeometry(),new THREE.LineBasicMaterial({color:'#54ddd0'}));cosineLine=new THREE.Line(lineGeometry(),new THREE.LineBasicMaterial({color:'#ffb169'}));scene.add(sineLine,cosineLine);
- const circleGeometry=new THREE.BufferGeometry();circleGeometry.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(3*97),3));
- circleLine=new THREE.LineLoop(circleGeometry,new THREE.LineBasicMaterial({color:'#8f7ad6'}));scene.add(circleLine);
- const radiusGeometry=new THREE.BufferGeometry();radiusGeometry.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(6),3));
- radiusLine=new THREE.Line(radiusGeometry,new THREE.LineBasicMaterial({color:'#f4d989'}));scene.add(radiusLine);
- ball=new THREE.Mesh(new THREE.SphereGeometry(.17,24,16),new THREE.MeshStandardMaterial({color:'#f4d989',emissive:'#f4d989',emissiveIntensity:.35,roughness:.35}));scene.add(ball);
- sineDot=new THREE.Mesh(new THREE.SphereGeometry(.11,16,12),new THREE.MeshBasicMaterial({color:'#54ddd0'}));cosineDot=new THREE.Mesh(new THREE.SphereGeometry(.11,16,12),new THREE.MeshBasicMaterial({color:'#ffb169'}));scene.add(sineDot,cosineDot);
- for(let k=0;k<RINGS;k++){const ring=new THREE.Mesh(new THREE.TorusGeometry(RING_RADIUS,.05,12,40),new THREE.MeshStandardMaterial({color:'#7c8db3',roughness:.5,metalness:.1}));scene.add(ring);ringMeshes.push(ring);}
+ const lineGeometry=count=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(3*count),3));return g;};
+ sineLine=new THREE.Line(lineGeometry(CURVE_POINTS+1),new THREE.LineBasicMaterial());cosineLine=new THREE.Line(lineGeometry(CURVE_POINTS+1),new THREE.LineBasicMaterial());
+ circleLine=new THREE.LineLoop(lineGeometry(96),new THREE.LineBasicMaterial());radiusLine=new THREE.Line(lineGeometry(2),new THREE.LineBasicMaterial());
+ scene.add(sineLine,cosineLine,circleLine,radiusLine);
+ helixMesh=new THREE.Mesh(new THREE.BufferGeometry(),new THREE.MeshStandardMaterial({roughness:.4,metalness:.15}));scene.add(helixMesh);
+ ball=new THREE.Mesh(new THREE.SphereGeometry(.17,24,16),new THREE.MeshStandardMaterial({emissiveIntensity:.35,roughness:.35}));scene.add(ball);
+ sineDot=new THREE.Mesh(new THREE.SphereGeometry(.11,16,12),new THREE.MeshBasicMaterial());cosineDot=new THREE.Mesh(new THREE.SphereGeometry(.11,16,12),new THREE.MeshBasicMaterial());scene.add(sineDot,cosineDot);
+ const torus=new THREE.TorusGeometry(RING_RADIUS,.05,12,40);
+ for(let k=0;k<RINGS;k++){const ring=new THREE.Mesh(torus,new THREE.MeshStandardMaterial({roughness:.5,metalness:.1,emissiveIntensity:.35}));scene.add(ring);ringMeshes.push(ring);}
  pointerControls(canvas);
  new ResizeObserver(resize).observe(canvas.parentElement);
  resize();
 }
-function resize(){if(!renderer)return;const box=el('game-gl').parentElement.getBoundingClientRect();if(!box.width)return;renderer.setSize(box.width,box.height,false);camera.aspect=box.width/box.height;camera.fov=camera.aspect<1?64:camera.aspect<1.4?52:42;camera.updateProjectionMatrix();invalidate();}
-// Rejillas del piso y de la pared con los colores del tema; se reconstruyen al cambiar de tema.
-let gridTheme=null;
-function grids(){const c=theme();for(const g of [floorGrid,wallGrid])if(g){g.geometry.dispose();g.material.dispose();scene.remove(g);}floorGrid=new THREE.GridHelper(LENGTH+2,14,c.gridCenter,c.grid);floorGrid.position.y=-WALL;wallGrid=new THREE.GridHelper(LENGTH+2,14,c.gridCenter,c.grid);wallGrid.rotation.z=PI/2;wallGrid.position.x=WALL;scene.add(floorGrid,wallGrid);gridTheme=c.bg;}
-// Rótulos HTML proyectados sobre la escena.
-const anchors={time:()=>new THREE.Vector3(0,-WALL,LENGTH/2+.6),sine:()=>new THREE.Vector3(WALL,3.9,-LENGTH/2+.4),cosine:()=>new THREE.Vector3(-3.9,-WALL,-LENGTH/2+.4),circle:()=>new THREE.Vector3(0,player.D+Math.abs(player.A)+.5,-LENGTH/2)};
-function placeLabels(){const box=el('game-gl').getBoundingClientRect();for(const span of el('game-labels').children){const v=anchors[span.dataset.anchor]().project(camera);const visible=v.z<1&&Math.abs(v.x)<1.05&&Math.abs(v.y)<1.05;span.hidden=!visible;if(visible){span.style.left=((v.x+1)/2*box.width).toFixed(1)+'px';span.style.top=((1-v.y)/2*box.height).toFixed(1)+'px';}}}
+function resize(){
+ if(!renderer)return;const box=el('game-gl').parentElement.getBoundingClientRect();if(!box.width)return;
+ // En pantallas chicas, menos píxeles por punto: más fluidez en el celular sin que se note.
+ renderer.setPixelRatio(Math.min(devicePixelRatio||1,box.width<600?1.5:2));
+ renderer.setSize(box.width,box.height,false);
+ camera.aspect=box.width/box.height;camera.fov=camera.aspect<1?64:camera.aspect<1.4?52:42;camera.updateProjectionMatrix();invalidate();
+}
+// Rejillas del piso y de la pared con los colores del tema; se reconstruyen solo al cambiar de tema.
+function grids(){
+ const c=theme();if(gridTheme===c.bg)return;
+ for(const g of [floorGrid,wallGrid])if(g){g.geometry.dispose();g.material.dispose();scene.remove(g);}
+ floorGrid=new THREE.GridHelper(LENGTH+2,14,c.gridCenter,c.grid);floorGrid.position.y=-WALL;
+ wallGrid=new THREE.GridHelper(LENGTH+2,14,c.gridCenter,c.grid);wallGrid.rotation.z=PI/2;wallGrid.position.x=WALL;
+ scene.add(floorGrid,wallGrid);gridTheme=c.bg;
+}
+function applyTheme(){
+ if(!renderer)return;const c=theme();
+ scene.background=new THREE.Color(c.bg);grids();
+ helixMesh.material.color.set(c.helix);sineLine.material.color.set(c.sine);cosineLine.material.color.set(c.cosine);circleLine.material.color.set(c.circle);radiusLine.material.color.set(c.ball);
+ ball.material.color.set(c.ball);ball.material.emissive.set(c.ball);sineDot.material.color.set(c.sine);cosineDot.material.color.set(c.cosine);
+ helixTheme=c.bg;updateRings();
+}
+// Geometría que depende de A, B, h y D: solo cuando cambian.
+function rebuildHelix(){
+ if(!renderer)return;
+ helixMesh.geometry.dispose();helixMesh.geometry=new THREE.TubeGeometry(new Helix(player),CURVE_POINTS,.06,8,false);
+ const sine=sineLine.geometry.attributes.position,cosine=cosineLine.geometry.attributes.position;
+ for(let i=0;i<=CURVE_POINTS;i++){const t=-TWO+2*TWO*i/CURVE_POINTS,v=value(player,t);sine.setXYZ(i,WALL,v.y,t*SCALE);cosine.setXYZ(i,v.x,-WALL,t*SCALE);}
+ sine.needsUpdate=true;cosine.needsUpdate=true;
+ const circle=circleLine.geometry.attributes.position;for(let i=0;i<96;i++){const a=2*PI*i/96;circle.setXYZ(i,player.A*Math.cos(a),player.A*Math.sin(a)+player.D,-TWO*SCALE);}circle.needsUpdate=true;
+ placeBall(ballT);
+}
+// Aros del nivel: posición al empezar el nivel, color cuando cambia el resultado.
+function updateRings(){
+ if(!renderer)return;const c=theme();
+ ringMeshes.forEach((ring,k)=>{const v=value(target,ringTimes[k]);ring.position.set(v.x,v.y,ringTimes[k]*SCALE);const state=hits[k];ring.material.color.set(state===true?c.hit:state===false?c.miss:c.ring);ring.material.emissive.set(state===true?c.hit:state===false?c.miss:'#000000');});
+ invalidate();
+}
+function placeBall(t){
+ ballT=t;if(!renderer)return;const v=value(player,t);
+ ball.position.set(v.x,v.y,t*SCALE);sineDot.position.set(WALL,v.y,t*SCALE);cosineDot.position.set(v.x,-WALL,t*SCALE);
+ const r=radiusLine.geometry.attributes.position;r.setXYZ(0,0,player.D,-TWO*SCALE);r.setXYZ(1,v.x,v.y,-TWO*SCALE);r.needsUpdate=true;
+ invalidate();
+}
+function paint3d(){if(!renderer)return;if(helixTheme!==theme().bg)applyTheme();rebuildHelix();updateRings();}
 function applyCamera(){camera.position.setFromSpherical(spherical).add(lookAt);camera.lookAt(lookAt);}
 function pointerControls(canvas){
- let pointers=new Map(),lastDistance=0;
+ const pointers=new Map();let lastDistance=0;
  canvas.addEventListener('pointerdown',e=>{canvas.setPointerCapture(e.pointerId);pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});animating=null;});
  canvas.addEventListener('pointermove',e=>{
   if(!pointers.has(e.pointerId))return;
@@ -101,34 +165,24 @@ function setView(name){
  animating=now=>{const u=Math.min(1,(now-start)/600),e=1-Math.pow(1-u,3);spherical.radius=from.radius+(to.radius-from.radius)*e;spherical.phi=from.phi+(to.phi-from.phi)*e;spherical.theta=from.theta+(to.theta-from.theta)*e;applyCamera();if(u>=1)animating=null;};
  invalidate();
 }
-function paint3d(){
- if(!renderer)return;
- const c=theme();
- scene.background=new THREE.Color(c.bg);
- if(gridTheme!==c.bg)grids();
- if(helixMesh){helixMesh.geometry.dispose();scene.remove(helixMesh);}
- helixMesh=new THREE.Mesh(new THREE.TubeGeometry(new Helix(player),320,.06,10,false),new THREE.MeshStandardMaterial({color:c.helix,roughness:.4,metalness:.15}));scene.add(helixMesh);
- const sine=sineLine.geometry.attributes.position,cosine=cosineLine.geometry.attributes.position;
- for(let i=0;i<=240;i++){const t=-TWO+2*TWO*i/240,v=value(player,t);sine.setXYZ(i,WALL,v.y,t*SCALE);cosine.setXYZ(i,v.x,-WALL,t*SCALE);}
- sine.needsUpdate=true;cosine.needsUpdate=true;sineLine.material.color.set(c.sine);cosineLine.material.color.set(c.cosine);
- const circle=circleLine.geometry.attributes.position;for(let i=0;i<97;i++){const a=2*PI*i/97;circle.setXYZ(i,player.A*Math.cos(a),player.A*Math.sin(a)+player.D,-TWO*SCALE);}circle.needsUpdate=true;circleLine.material.color.set(c.circle);
- ringMeshes.forEach((ring,k)=>{const v=value(target,ringTimes[k]);ring.position.set(v.x,v.y,ringTimes[k]*SCALE);ring.material.color.set(hits[k]===true?c.hit:hits[k]===false?c.miss:c.ring);ring.material.emissive.set(hits[k]===true?c.hit:'#000000');ring.material.emissiveIntensity=.35;});
- ball.material.color.set(c.ball);ball.material.emissive.set(c.ball);sineDot.material.color.set(c.sine);cosineDot.material.color.set(c.cosine);radiusLine.material.color.set(c.ball);
- placeBall(ballT);invalidate();
-}
-let ballT=-TWO;
-function placeBall(t){
- ballT=t;const v=value(player,t);ball.position.set(v.x,v.y,t*SCALE);sineDot.position.set(WALL,v.y,t*SCALE);cosineDot.position.set(v.x,-WALL,t*SCALE);
- const r=radiusLine.geometry.attributes.position;r.setXYZ(0,0,player.D,-TWO*SCALE);r.setXYZ(1,player.A*Math.cos(player.B*(t-player.h)),player.A*Math.sin(player.B*(t-player.h))+player.D,-TWO*SCALE);r.needsUpdate=true;
+// Rótulos HTML proyectados sobre la escena.
+const anchors={time:()=>new THREE.Vector3(0,-WALL,LENGTH/2+.6),sine:()=>new THREE.Vector3(WALL,3.9,-LENGTH/2+.4),cosine:()=>new THREE.Vector3(-3.9,-WALL,-LENGTH/2+.4),circle:()=>new THREE.Vector3(0,player.D+Math.abs(player.A)+.5,-LENGTH/2)};
+let labelWidth=0,labelHeight=0;
+function placeLabels(){
+ for(const span of el('game-labels').children){const v=anchors[span.dataset.anchor]().project(camera);const visible=v.z<1&&Math.abs(v.x)<1.05&&Math.abs(v.y)<1.05;span.hidden=!visible;if(visible){span.style.left=((v.x+1)/2*labelWidth).toFixed(1)+'px';span.style.top=((1-v.y)/2*labelHeight).toFixed(1)+'px';}}
 }
 function invalidate(){needsRender=true;if(!frame)frame=requestAnimationFrame(loop);}
 function loop(now){
  frame=0;
  if(animating){animating(now);needsRender=true;}
  if(launch){launch(now);needsRender=true;}
- if(needsRender&&renderer&&view3d&&!el('game-mode').hidden){renderer.render(scene,camera);placeLabels();}
+ if(needsRender&&!el('game-mode').hidden){
+  if(view3d&&renderer){const box=renderer.domElement.getBoundingClientRect();labelWidth=box.width;labelHeight=box.height;renderer.render(scene,camera);placeLabels();}
+  else paint2d();
+ }
  needsRender=false;
- if(animating||launch)frame=requestAnimationFrame(loop);
+ // Un solo cuadro pendiente por vez: si algo ya pidió el siguiente (invalidate), no se duplica.
+ if((animating||launch)&&!frame)frame=requestAnimationFrame(loop);
 }
 
 /* ---------- Dos dimensiones ---------- */
@@ -148,16 +202,22 @@ function paint2d(){
 }
 
 /* ---------- Juego ---------- */
-function paint(){if(view3d)paint3d();else paint2d();}
+function paint(){if(view3d)paint3d();invalidate();}
 function evaluateHits(){return ringTimes.map(t=>{const p=value(player,t),q=value(target,t);return Math.hypot(p.x-q.x,p.y-q.y)<=RING_RADIUS-.06;});}
 let launch=null;
 function startLaunch(){
  if(launch||solved)return;
- launches++;hits=[];const result=evaluateHits();el('game-result').textContent='';el('game-hint').textContent='';
- const finish=()=>{launch=null;hits=result;placeBall(TWO);paint();report(result);};
- if(reduced.matches){finish();return;}
+ audioContext(); // se crea con el gesto del usuario, como exigen los navegadores
+ launches++;hits=[];const result=evaluateHits();el('game-result').textContent='';el('game-hint').textContent='';updateRings();
+ const finish=()=>{launch=null;hits=result;placeBall(TWO);updateRings();report(result);};
+ if(reduced.matches){finish();if(result.every(Boolean))winSound();else missSound();return;}
  const start=performance.now(),duration=3600;
- launch=now=>{const u=Math.min(1,(now-start)/duration),t=-TWO+2*TWO*u;placeBall(t);ringTimes.forEach((rt,k)=>{if(t>=rt&&hits[k]===undefined)hits[k]=result[k];});if(view3d)paint3d();else paint2d();if(u>=1)finish();};
+ launch=now=>{
+  const u=Math.min(1,(now-start)/duration),t=-TWO+2*TWO*u;placeBall(t);
+  let changed=false;ringTimes.forEach((rt,k)=>{if(t>=rt&&hits[k]===undefined){hits[k]=result[k];changed=true;if(result[k])hitSound(k);else missSound();}});
+  if(changed)updateRings();
+  if(u>=1)finish();
+ };
  el('game-launch').disabled=true;invalidate();
 }
 function report(result){
@@ -165,6 +225,7 @@ function report(result){
  if(count===RINGS){
   solved=true;const stars=launches===1?3:launches<=3?2:1;best[level]=Math.max(best[level]||0,stars);
   try{localStorage.setItem('trigolab-juego',JSON.stringify(best));}catch{}
+  if(!reduced.matches)winSound();
   el('game-result').textContent=`¡Atravesaste los ${RINGS} aros en ${launches} ${launches===1?'lanzamiento':'lanzamientos'}! ${'★'.repeat(stars)}${'☆'.repeat(3-stars)}`;
   el('game-hint').textContent=`Tu hélice: A = ${round(player.A)}, B = ${round(player.B)}, h = ${angle(player.h)}, D = ${round(player.D)}. Amplitud ${round(Math.abs(player.A))}, período ${angle(TWO/Math.abs(player.B))}.`;
   el('game-next').hidden=false;el('game-launch').hidden=true;
@@ -189,7 +250,7 @@ function buildSliders(){
   const locked=!free.includes(key),div=document.createElement('div');div.className='slider'+(locked?' locked':'');
   div.innerHTML=`<label for="game-${key}">${label}<output id="game-out-${key}"></output></label><input id="game-${key}" type="range" min="${min}" max="${max}" step="${step}" value="${player[key]}"${locked?' disabled':''}><small>${locked?'Fijo en este nivel.':key==='A'?'Más A: hélice más ancha y onda más alta.':key==='B'?'Más B: más vueltas y período más corto.':key==='h'?'h > 0 corre la hélice hacia adelante.':'D sube o baja toda la hélice.'}</small>`;
   box.append(div);
-  el('game-'+key).addEventListener('input',e=>{player[key]=Number(e.target.value);hits=[];outputs();paint();});
+  el('game-'+key).addEventListener('input',e=>{player[key]=Number(e.target.value);if(hits.length){hits=[];updateRings();}outputs();rebuildHelix();invalidate();});
  }
  outputs();
 }
@@ -215,9 +276,10 @@ export function init(){
  if(!renderer){notice.textContent='Este dispositivo no permite la vista 3D. Podés jugar igual en la vista plana.';notice.hidden=false;el('game-3d').disabled=true;}
  el('game-launch').onclick=startLaunch;el('game-next').onclick=()=>{level++;startLevel();};el('game-retry').onclick=startLevel;
  el('game-3d').onclick=()=>setMode(true);el('game-2d').onclick=()=>setMode(false);
+ el('game-sound').onclick=()=>{setMuted(!muted);if(!muted)hitSound(4);};setMuted(muted);
  for(const b of document.querySelectorAll('#game-views button'))b.onclick=()=>setView(b.dataset.view);
  new MutationObserver(paint).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
- new ResizeObserver(()=>{if(!view3d)paint2d();}).observe(el('game-2d-canvas').parentElement);
+ new ResizeObserver(()=>{if(!view3d)invalidate();}).observe(el('game-2d-canvas').parentElement);
  startLevel();setMode(true);if(renderer){applyCamera();setView('free');}
 }
-export const _test={get state(){return {level,target,player,launches,hits,solved,view3d,webgl:!!renderer,camera:camera?{x:camera.position.x,y:camera.position.y,z:camera.position.z,radius:spherical.radius,phi:spherical.phi,theta:spherical.theta}:null};},set(params){Object.assign(player,params);outputs();for(const key of Object.keys(params)){const input=el('game-'+key);if(input)input.value=params[key];}hits=[];paint();}};
+export const _test={get state(){return {level,target,player,launches,hits,solved,view3d,muted,webgl:!!renderer,camera:camera?{x:camera.position.x,y:camera.position.y,z:camera.position.z,radius:spherical.radius,phi:spherical.phi,theta:spherical.theta}:null};},set(params){Object.assign(player,params);outputs();for(const key of Object.keys(params)){const input=el('game-'+key);if(input)input.value=params[key];}hits=[];updateRings();rebuildHelix();invalidate();}};

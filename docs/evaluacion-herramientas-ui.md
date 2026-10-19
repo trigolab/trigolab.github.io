@@ -122,6 +122,10 @@ Cómo está hecho:
 
 Decisiones: tiempo de izquierda a derecha en todas las vistas; la pared del seno queda detrás de la hélice y el piso del coseno debajo; los aros son toros en el plano del círculo, así en la vista "de costado" se ven como trazos y en la "de frente" como círculos. Las pistas solo hablan de los parámetros libres del nivel para no dar la respuesta.
 
+### Fluidez y sonido (rama `mejora/juego-fluido`)
+
+Probado en PC y en un Galaxy S25 Ultra, el lanzamiento se veía trabado. Medido con Playwright: 5 cuadros por segundo durante el lanzamiento, 95 al girar la cámara. Dos causas: el bucle de animación pedía dos cuadros siguientes por cuadro (uno desde `invalidate()` y otro al final del bucle), con lo que la cola de cuadros se multiplicaba; y además se reconstruía toda la geometría de la hélice en cada cuadro. Ahora hay un solo cuadro pendiente por vez, la geometría se reconstruye solo cuando cambian A, B, h o D, se pide la placa de video de alto rendimiento y en pantallas chicas se dibuja a 1,5 píxeles por punto. Resultado medido: 60 cuadros por segundo en el lanzamiento. Se agregó sonido sintetizado con WebAudio, sin archivos: cada aro atravesado suena una nota más aguda de la escala, un aro perdido un golpe grave y el nivel completo un acorde. Botón para apagarlo; la preferencia se guarda. La prueba verifica que durante un lanzamiento animado los aros se van coloreando de a uno y que el silencio se recuerda.
+
 ## 10. Veredicto
 
 Las herramientas del reel sirven para construir rápido landings y paneles con React. TrigoLab no es eso: es una app didáctica en JavaScript nativo, sin dependencias, con pruebas automáticas y reglas de publicación estrictas. De las tres, solo UI UX Pro Max se puede usar sin romper nada, y su aporte es una lista de verificación genérica. La mejora de hoy salió de mirar la app en un celular y de las reglas del propio repo, no de la skill. El camino para seguir mejorando la experiencia de los alumnos es ese: observar un problema concreto, cambiar lo mínimo, probar y publicar por PR.
