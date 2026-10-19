@@ -91,6 +91,24 @@ git push -u origin mejora/lectura-de-parametros
 
 Abrir el Pull Request, esperar el check "Probar y publicar TrigoLab" en verde y hacer Merge. Al entrar en `main` se publica solo en https://trigolab.github.io. Si algo falla, el sitio anterior sigue en línea.
 
-## 8. Veredicto
+## 8. Segunda tanda de mejoras (misma fecha, rama `mejora/experiencia-alumnos`)
+
+A pedido de Cristian se implementaron todas las mejoras detectadas, cada una con su prueba:
+
+| Mejora | Dónde | Prueba |
+|---|---|---|
+| Desafíos con devolución concreta: indica qué parámetro falta (función, amplitud o escala vertical, período, desfasaje, traslado) | `app.js` `challengeFeedback()` | `browser.test.py` |
+| Desafíos ilimitados: cinco fijos y después generados al azar, estables mientras no se pasa al siguiente | `app.js` `challengeAt()` | `browser.test.py` |
+| Experiencias guiadas 05 Corrimiento (h = π/2) y 06 Línea media (D = 1), con h convertido a grados cuando el escenario está en grados | `motion.js` | `browser.test.py` |
+| Borrador de «Mi explicación» guardado en el navegador | `classroom.js` | `classroom.test.py` |
+| Plano y comparador con fondo y colores del tema oscuro, también en los PNG exportados | `app.js`, `comparison.js`, `style.css` | `classroom.test.py` |
+| Legibilidad: textos de ayuda e indicadores de 10-12 px a 11-14 px | `style.css` | anchos 360/390/768 sin desborde en todas las suites |
+| Sin conexión real e instalación como app: `sw.js` (red primero), `manifest.webmanifest`, íconos SVG y PNG | `trigolab/`, `prepare_web.py`, `servidor.py` | `offline.test.py` (apaga el servidor y la app sigue), `server.test.py` |
+
+Decisiones de seguridad para no romper lo que funciona: el service worker solo intercepta los archivos propios de la app y siempre intenta la red primero, así una publicación nueva llega a los alumnos en cuanto recargan; el borrador se guarda solo en el dispositivo del alumno; los desafíos generados usan valores alcanzables con los controles (A, B, h y D sobre sus pasos).
+
+Pendiente de verificar en la publicación real: que GitHub Pages sirva `manifest.webmanifest` con el tipo `application/manifest+json` (el servidor local ya lo hace) y que Chrome en Android ofrezca «Instalar». Si no lo ofrece, la app sigue funcionando sin conexión igual.
+
+## 9. Veredicto
 
 Las herramientas del reel sirven para construir rápido landings y paneles con React. TrigoLab no es eso: es una app didáctica en JavaScript nativo, sin dependencias, con pruebas automáticas y reglas de publicación estrictas. De las tres, solo UI UX Pro Max se puede usar sin romper nada, y su aporte es una lista de verificación genérica. La mejora de hoy salió de mirar la app en un celular y de las reglas del propio repo, no de la skill. El camino para seguir mejorando la experiencia de los alumnos es ese: observar un problema concreto, cambiar lo mínimo, probar y publicar por PR.
