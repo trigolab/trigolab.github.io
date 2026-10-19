@@ -109,6 +109,19 @@ Decisiones de seguridad para no romper lo que funciona: el service worker solo i
 
 Pendiente de verificar en la publicación real: que GitHub Pages sirva `manifest.webmanifest` con el tipo `application/manifest+json` (el servidor local ya lo hace) y que Chrome en Android ofrezca «Instalar». Si no lo ofrece, la app sigue funcionando sin conexión igual.
 
-## 9. Veredicto
+## 9. Modo Juego: la hélice (rama `mejora/juego-helice`)
+
+Idea didáctica: un punto gira en el círculo mientras el tiempo avanza y dibuja una hélice. Su sombra de costado es el seno; desde arriba, el coseno. El alumno ajusta A, B, h y D para que la hélice atraviese siete aros. Es el modo "Desafíos" convertido en juego, y la primera vez que TrigoLab muestra seno y coseno como dos sombras del mismo movimiento.
+
+Cómo está hecho:
+
+- `trigolab/juego.js`: módulo ES que se descarga recién al entrar al modo "05 / Juego" (la app principal no pesa más). Vista 3D con Three.js y vista 2D en canvas sobre el mismo nivel. Cinco niveles que liberan de a uno A, B, D y h; después niveles al azar. Pistas direccionales ("los aros dan más vueltas que tu hélice: aumentá B"), estrellas por cantidad de lanzamientos, mejor puntaje guardado en el navegador. Cámara con arrastre y pellizco, cuatro vistas con nombre (perspectiva, círculo, seno, coseno), rótulos proyectados sobre la escena, tema claro y oscuro, `prefers-reduced-motion` (sin animaciones de cámara ni de lanzamiento).
+- `trigolab/vendor/three.min.js`: Three.js 0.186.1 (MIT) reducido con esbuild a las clases que usa el juego: 544 KB, 140 KB comprimido. Se incluye en el repo para no depender de ningún servidor externo; el service worker lo guarda para uso sin conexión. Cómo regenerarlo está en `vendor/README.md`.
+- Sin WebGL, el modo avisa y ofrece la vista 2D. Abierta desde el archivo `index.html` (sin servidor), el modo explica cómo abrirlo porque los módulos no cargan desde `file://`; el resto de la app no cambia.
+- Pruebas: `juego.test.py` sirve la app por http y verifica carga diferida, niveles, bloqueo de controles, pistas, estrellas, vistas, 2D, tema oscuro y celular; `browser.test.py` verifica el aviso cuando se abre desde el archivo; `server.test.py` y `offline.test.py` cubren los archivos nuevos.
+
+Decisiones: tiempo de izquierda a derecha en todas las vistas; la pared del seno queda detrás de la hélice y el piso del coseno debajo; los aros son toros en el plano del círculo, así en la vista "de costado" se ven como trazos y en la "de frente" como círculos. Las pistas solo hablan de los parámetros libres del nivel para no dar la respuesta.
+
+## 10. Veredicto
 
 Las herramientas del reel sirven para construir rápido landings y paneles con React. TrigoLab no es eso: es una app didáctica en JavaScript nativo, sin dependencias, con pruebas automáticas y reglas de publicación estrictas. De las tres, solo UI UX Pro Max se puede usar sin romper nada, y su aporte es una lista de verificación genérica. La mejora de hoy salió de mirar la app en un celular y de las reglas del propio repo, no de la skill. El camino para seguir mejorando la experiencia de los alumnos es ese: observar un problema concreto, cambiar lo mínimo, probar y publicar por PR.
