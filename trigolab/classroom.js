@@ -14,6 +14,8 @@
   const draft=el('student-explanation');
   try{draft.value=localStorage.getItem('trigolab-explicacion')||draft.value;}catch{}
   draft.addEventListener('input',()=>{try{localStorage.setItem('trigolab-explicacion',draft.value);}catch{}});
+  // Sin conexión real: el service worker guarda la app tras la primera visita (solo en https o localhost).
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
 
   el('share-class').onclick=async()=>{
     const info=el('share-info');info.textContent='Buscando el enlace de esta sesión…';el('share-dialog').showModal();

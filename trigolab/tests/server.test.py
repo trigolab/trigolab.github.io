@@ -15,9 +15,11 @@ thread = Thread(target=server.serve_forever, daemon=True)
 thread.start()
 base = f'http://127.0.0.1:{server.server_port}'
 try:
-    for path in ['/', '/index.html', '/math.js', '/app.js', '/motion.js', '/classroom.js', '/style.css']:
+    for path in ['/', '/index.html', '/math.js', '/app.js', '/motion.js', '/classroom.js', '/comparison.js', '/style.css', '/sw.js', '/manifest.webmanifest', '/icono.svg', '/icono-192.png', '/icono-512.png']:
         with urlopen(base + path) as response:
             assert response.status == 200, path
+    with urlopen(base + '/manifest.webmanifest') as response:
+        assert response.headers['Content-Type'].startswith('application/manifest+json')
     with urlopen(base+'/conexion.json') as response:
         assert json.load(response) == {'lan': False, 'urls': []}
     for path in ['/servidor.py', '/tests/', '/Video%20Ejemplo.mp4', '/README.md', '/%2e%2e/README.md']:

@@ -33,6 +33,7 @@ No hace falta `npm install`. Con Node instalado, `npm test` ejecuta las pruebas 
 - Desafíos de construcción de funciones: cinco fijos y después generados al azar. La comprobación indica qué parámetro falta ajustar (función, amplitud, período, desfasaje o traslado); contador por sesión.
 - Tabla de valores, exportación CSV y descarga PNG de la gráfica.
 - Tema claro y oscuro en toda la aplicación, incluidos los gráficos. El borrador de «Mi explicación» se guarda en el navegador del alumno.
+- Sin conexión real en la versión publicada: después de la primera visita, un service worker guarda la app y sigue funcionando sin internet. Desde el celular se puede «Agregar a la pantalla de inicio» y abrirla como aplicación. Con internet siempre se usa la versión publicada más reciente.
 - Diseño adaptable a computadora y celular; guía integrada.
 
 Los indicadores automáticos se calculan para `A·sen(Bx+C)+D`, `A·cos(Bx+C)+D` y `A·tan(Bx+C)+D`. Otras expresiones, incluidas secante, cosecante y cotangente, se grafican, pero no se les asignan automáticamente esos indicadores. Mover un control reemplaza una expresión libre por la función de los controles.

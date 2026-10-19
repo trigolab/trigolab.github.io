@@ -18,7 +18,7 @@ node trigolab/tests/math.test.cjs
 python run_tests.py
 ```
 
-`out/` contiene los siete recursos de la aplicación y `.nojekyll`, con `index.html` en su raíz. Solo esa carpeta se publica. Videos de referencia, resultados de pruebas, ZIP, herramientas y configuración de Sites quedan excluidos.
+`out/` contiene los recursos de la aplicación (HTML, CSS, JavaScript, service worker, manifiesto e íconos) y `.nojekyll`, con `index.html` en su raíz. Solo esa carpeta se publica. Videos de referencia, resultados de pruebas, ZIP, herramientas y configuración de Sites quedan excluidos.
 
 En Windows las pruebas usan Chrome si está instalado en su ubicación habitual; en Linux usan Chromium de Playwright. Se puede indicar otra ruta con `TRIGOLAB_BROWSER`. Para probar una publicación, usar `TRIGOLAB_BASE_URL` o pasar la URL como argumento a los tres scripts de navegador.
 
