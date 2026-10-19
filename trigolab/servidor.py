@@ -7,7 +7,7 @@ import json
 import socket
 
 ROOT = Path(__file__).resolve().parent
-PUBLIC = {'index.html', 'style.css', 'math.js', 'motion.js', 'app.js', 'classroom.js', 'comparison.js', 'sw.js', 'manifest.webmanifest', 'icono.svg', 'icono-192.png', 'icono-512.png'}
+PUBLIC = {'index.html', 'style.css', 'math.js', 'motion.js', 'app.js', 'classroom.js', 'comparison.js', 'sw.js', 'manifest.webmanifest', 'icono.svg', 'icono-192.png', 'icono-512.png', 'juego.js', 'vendor/three.min.js', 'vendor/LICENSE-three.txt'}
 SimpleHTTPRequestHandler.extensions_map['.webmanifest'] = 'application/manifest+json'
 
 def addresses(port):

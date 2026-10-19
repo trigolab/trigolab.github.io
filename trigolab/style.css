@@ -51,3 +51,23 @@
 [data-theme=dark] .canvas-wrap,[data-theme=dark] .multi-canvas{background:#0f1a2e}
 [data-theme=dark] .teal{background:#54ddd0}
 [data-theme=dark] .slot-0{border-top-color:#b79af7}[data-theme=dark] .slot-1{border-top-color:#54ddd0}[data-theme=dark] .slot-2{border-top-color:#ffb169}
+
+/* Modo Juego: panel de controles a la izquierda y escena 3D o plana a la derecha. */
+.game-layout{display:grid;grid-template-columns:300px minmax(0,1fr);gap:22px;align-items:start;margin-top:18px}
+.game-side .slider.locked{opacity:.55}.game-side .slider{margin:14px 0}
+.game-actions{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 8px}
+#game-result{font-weight:650;min-height:24px;line-height:1.5}
+.game-stage{min-width:0}
+.game-toolbar{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
+.game-views{display:flex;gap:6px;flex-wrap:wrap}.game-views button{font-size:12px;padding:8px 10px;background:#eff0f7;color:var(--ink)}.game-views button[aria-pressed=true]{background:var(--ink);color:white}
+.game-canvas{position:relative;height:460px;border-radius:14px;overflow:hidden;background:#eef1f8;border:1px solid var(--line)}
+.game-canvas canvas{display:block;width:100%;height:100%;touch-action:none}
+#game-notice{position:absolute;left:12px;right:12px;bottom:12px;margin:0;padding:12px 14px;border-radius:10px;background:#fff4d8;color:#654800;font-size:13px;line-height:1.5}
+#game-caption{margin-top:10px}
+[data-theme=dark] .game-canvas{background:#0f1a2e}
+[data-theme=dark] .game-views button{background:#2b3c59;color:var(--ink)}[data-theme=dark] .game-views button[aria-pressed=true]{background:#c4b2ff;color:#18233a}
+[data-theme=dark] #game-notice{background:#3a2f1a;color:#ffe2a9}
+@media(max-width:1050px){.game-layout{grid-template-columns:260px minmax(0,1fr)}}
+@media(max-width:760px){.game-layout{grid-template-columns:1fr;gap:14px}.game-stage{order:-1}.game-canvas{height:340px}.game-views button{font-size:11px;padding:8px}}
+.game-labels{position:absolute;inset:0;pointer-events:none}.game-labels span{position:absolute;transform:translate(-50%,-50%);font-size:11px;font-weight:650;letter-spacing:.3px;padding:3px 8px;border-radius:999px;background:#ffffffd9;color:#20334f;white-space:nowrap;box-shadow:0 1px 4px #20264120}
+[data-theme=dark] .game-labels span{background:#17243ad9;color:#dfe7fa}

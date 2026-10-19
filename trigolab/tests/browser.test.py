@@ -81,6 +81,13 @@ with sync_playwright() as pw:
     assert '°' in page.locator('#target').inner_text()
     page.locator('#rad').click()
     assert page.locator('#target').inner_text()==sixth
+    # Abierta desde el archivo (sin servidor), el modo Juego explica cómo abrirlo; el resto sigue igual.
+    page.locator('button[data-mode=game]').click()
+    page.wait_for_selector('#game-notice:not([hidden])')
+    assert 'servidor' in page.locator('#game-notice').inner_text()
+    assert not page.locator('.layout').is_visible()
+    page.locator('button[data-mode=challenge]').click()
+    assert page.locator('#formula').is_visible()
     page.locator('button[data-mode=identity]').click()
     page.locator('#identity-choice').select_option('1')
     result=page.locator('#identity-result').inner_text()
