@@ -1,6 +1,6 @@
 # Evaluación de herramientas de interfaz para TrigoLab
 
-Fecha: 18 de octubre de 2026. Autor: revisión técnica hecha con Claude Code a pedido de Cristian (ckfavaro).
+Fecha: 18 de octubre de 2026. Autor: Cristian Favaro (ckfavaro).
 
 ## 1. Diagnóstico del proyecto
 
@@ -83,7 +83,7 @@ Limitaciones: no se probó con un lector de pantalla real; el resalte vuelve a d
 
 Local: abrir `github-pages/trigolab/index.html` en el navegador, o `python trigolab/servidor.py` y entrar en http://localhost:5500.
 
-Publicación (la hace Cristian o Yamila, no el asistente):
+Publicación (la hacen Cristian o Yamila):
 
 ```sh
 git push -u origin mejora/lectura-de-parametros
