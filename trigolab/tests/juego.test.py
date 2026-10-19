@@ -69,6 +69,23 @@ try:
         page.locator('#game-2d').click()
         assert page.locator('#game-2d-canvas').is_visible() and not page.locator('#game-gl').is_visible()
         page.locator('[aria-labelledby=game-title]').screenshot(path=str(artifacts / 'juego-2d.png'))
+        # El sonido se puede apagar y la preferencia se recuerda.
+        assert page.locator('#game-sound').get_attribute('aria-pressed') == 'true'
+        page.locator('#game-sound').click()
+        assert page.locator('#game-sound').get_attribute('aria-pressed') == 'false' and state()['muted'] is True
+        assert page.evaluate("localStorage.getItem('trigolab-sonido')") == 'off'
+        page.locator('#game-sound').click()
+        assert state()['muted'] is False
+        # Durante un lanzamiento animado solo se mueve la bolita: la geometría de la hélice no se reconstruye.
+        page.emulate_media(reduced_motion='no-preference')
+        page.evaluate("p=>import('./juego.js').then(m=>m._test.set(p))", {'A': t['A'], 'B': t['B']})
+        page.locator('#game-launch').click()
+        page.wait_for_timeout(400)
+        assert page.locator('#game-launch').is_disabled()
+        mid = state()
+        assert 0 < len([h for h in mid['hits'] if h is not None]) < 7, mid['hits']
+        page.wait_for_function("document.getElementById('game-result').textContent.includes('Atravesaste los 7')", timeout=10000)
+        page.emulate_media(reduced_motion='reduce')
         # Reiniciar nivel vuelve a cero los lanzamientos; el progreso queda guardado.
         page.locator('#game-retry').click()
         assert state()['launches'] == 0

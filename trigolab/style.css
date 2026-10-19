@@ -71,3 +71,4 @@
 @media(max-width:760px){.game-layout{grid-template-columns:1fr;gap:14px}.game-stage{order:-1}.game-canvas{height:340px}.game-views button{font-size:11px;padding:8px}}
 .game-labels{position:absolute;inset:0;pointer-events:none}.game-labels span{position:absolute;transform:translate(-50%,-50%);font-size:11px;font-weight:650;letter-spacing:.3px;padding:3px 8px;border-radius:999px;background:#ffffffd9;color:#20334f;white-space:nowrap;box-shadow:0 1px 4px #20264120}
 [data-theme=dark] .game-labels span{background:#17243ad9;color:#dfe7fa}
+.game-switches{display:flex;gap:8px;align-items:center}#game-sound{font-size:12px;padding:8px 10px}#game-sound[aria-pressed=false]{opacity:.7}
