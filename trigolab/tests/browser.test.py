@@ -21,21 +21,66 @@ with sync_playwright() as pw:
         page.locator('#formula').fill(text)
         page.locator('#formula-form button').click()
         assert page.locator('#error').inner_text()==''
+    assert 'Explorá' in page.locator('nav button[aria-current=true]').inner_text()
     formula('3sen(2x-pi)+1')
     assert '3' in page.locator('#metrics').inner_text()
+    # Lectura en vivo de cada control: período 2π/2 = π y desfasaje π/2 a la derecha, también en grados.
+    assert '= π.' in page.locator('#effect-B').inner_text()
+    assert 'π/2 hacia la derecha' in page.locator('#effect-h').inner_text()
+    assert 'Amplitud |A| = 3' in page.locator('#effect-A').inner_text()
+    assert 'Línea media y = 1' in page.locator('#effect-D').inner_text()
     page.locator('#deg').click()
     assert '90°' in page.locator('#metrics').inner_text()
+    assert '= 180°.' in page.locator('#effect-B').inner_text()
+    assert '90° hacia la derecha' in page.locator('#effect-h').inner_text()
     page.locator('#rad').click()
+    # Al mover solo A cambia un indicador (amplitud) y se resalta; con movimiento reducido no hay animación.
+    page.locator('#slider-A').fill('4')
+    assert page.locator('.metric.changed').count()==1
+    assert 'Amplitud' in page.locator('.metric.changed').inner_text()
+    page.emulate_media(reduced_motion='reduce')
+    page.locator('#slider-A').fill('2')
+    assert page.evaluate("getComputedStyle(document.querySelector('.metric.changed')).animationName")=='none'
+    page.emulate_media(reduced_motion='no-preference')
+    page.locator('#kind').select_option('tan')
+    assert 'no tiene amplitud' in page.locator('#effect-A').inner_text()
+    assert '= π/2.' in page.locator('#effect-B').inner_text()
+    page.locator('#kind').select_option('sin')
     formula('2sen(0x+pi/2)+1')
+    assert 'B = 0' in page.locator('#effect-B').inner_text()
     page.locator('#slider-A').fill('3')
     assert abs(page.evaluate('M.evaluate(ast,0,unit)')-4)<1e-10
     formula('cos(0x)+10')
     assert page.evaluate('bounds().ymax')>=12
     page.locator('button[data-mode=challenge]').click()
     assert page.locator('#formula').is_visible()
+    assert 'Desafíos' in page.locator('nav button[aria-current=true]').inner_text()
+    assert page.locator('nav button[aria-current=true]').count()==1
+    assert page.locator('#target').inner_text().startswith('Desafío 1 ·')
     formula('3sen(2x)')
     page.locator('#check-challenge').click()
     assert 'Lo lograste' in page.locator('#feedback').inner_text()
+    # Devolución concreta: el desafío 2 pide coseno, A = 2, período 2π, h = π/2 y D = 1.
+    page.locator('#next-challenge').click()
+    assert page.locator('#target').inner_text().startswith('Desafío 2 ·')
+    page.locator('#check-challenge').click()
+    feedback=page.locator('#feedback').inner_text()
+    for text in ['Todavía falta','Función: tenés seno y el desafío pide coseno','Amplitud: tenés 3 y hace falta 2','Período: tenés π y hace falta 2π','Desfasaje: tenés 0 y hace falta π/2','Traslado vertical: tenés 0 y hace falta 1']:
+        assert text in feedback, (text, feedback)
+    formula('2cos(x-pi/2)+1')
+    page.locator('#check-challenge').click()
+    assert 'Lo lograste' in page.locator('#feedback').inner_text()
+    formula('sen(x)^2')
+    page.locator('#check-challenge').click()
+    assert 'no tiene la forma' in page.locator('#feedback').inner_text()
+    # Después de los cinco fijos siguen desafíos generados, estables mientras no se pase al siguiente.
+    for _ in range(4):page.locator('#next-challenge').click()
+    sixth=page.locator('#target').inner_text()
+    assert sixth.startswith('Desafío 6 ·') and 'Período = ' in sixth, sixth
+    page.locator('#deg').click()
+    assert '°' in page.locator('#target').inner_text()
+    page.locator('#rad').click()
+    assert page.locator('#target').inner_text()==sixth
     page.locator('button[data-mode=identity]').click()
     page.locator('#identity-choice').select_option('1')
     result=page.locator('#identity-result').inner_text()
@@ -82,6 +127,26 @@ with sync_playwright() as pw:
     page.locator('#show-tan').uncheck()
     assert page.locator('#motion-status-tan').inner_text()=='Curva oculta'
     page.locator('#show-tan').check()
+    # Experiencias nuevas: corrimiento h = π/2 y línea media D = 1. Las respuestas deben quedar habilitadas.
+    assert page.locator('#motion-lessons button').count()==6
+    page.locator('#motion-lessons button').nth(4).click()
+    page.locator('#motion-zero').click()
+    assert page.locator('#motion-value-sin').inner_text()=='y = -1'
+    assert not page.locator('#motion-answers button').first.is_disabled()
+    page.locator('#motion-answers button').nth(1).click()
+    assert 'Exacto' in page.locator('#motion-feedback').inner_text()
+    page.locator('#motion-deg').click()
+    page.locator('#motion-lessons button').nth(4).click()
+    page.locator('#motion-zero').click()
+    assert 'θ = -90°' in page.locator('#motion-angle').inner_text()
+    assert not page.locator('#motion-answers button').first.is_disabled()
+    page.locator('#motion-rad').click()
+    page.locator('#motion-lessons button').nth(5).click()
+    page.locator('#motion-position').fill('0.625')
+    assert page.locator('#motion-value-sin').inner_text()=='y = 2'
+    assert not page.locator('#motion-answers button').first.is_disabled()
+    page.locator('#motion-answers button').nth(1).click()
+    assert 'Exacto' in page.locator('#motion-feedback').inner_text()
     formula('sen(x)^2+cos(x)^2')
     assert page.locator('#motion-unavailable').is_visible()
     assert not page.locator('#motion-visuals').is_visible()

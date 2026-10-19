@@ -17,6 +17,9 @@ with sync_playwright() as pw:
     page.goto(app_url())
     page.locator('#theme').select_option('dark')
     assert page.locator('html').get_attribute('data-theme') == 'dark'
+    # El plano y el comparador adoptan el fondo oscuro en lugar de quedar blancos.
+    assert page.evaluate("getComputedStyle(document.querySelector('.canvas-wrap')).backgroundColor") == 'rgb(15, 26, 46)'
+    assert page.evaluate("getComputedStyle(document.querySelector('.multi-canvas')).backgroundColor") == 'rgb(15, 26, 46)'
     page.reload()
     assert page.locator('#theme').input_value() == 'dark'
     page.locator('#motion-lessons button').first.click()
@@ -75,6 +78,12 @@ with sync_playwright() as pw:
     else:
         assert 'sin servidor' in page.locator('#share-info').inner_text()
     page.locator('#close-share').click()
+    # El borrador de la explicación sobrevive a una recarga.
+    page.reload()
+    assert page.locator('#student-explanation').input_value() == 'Al duplicar B, el período se reduce a la mitad.'
+    page.locator('#student-explanation').fill('')
+    page.reload()
+    assert page.locator('#student-explanation').input_value() == ''
     for width in [360, 390, 768]:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')

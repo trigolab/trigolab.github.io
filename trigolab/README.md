@@ -1,6 +1,6 @@
 # TrigoLab — Matemática en movimiento
 
-Aplicación local en español para explorar seno, coseno y tangente en 6.º año. No requiere cuenta, internet, servidor de datos ni bibliotecas externas. El código se puede editar en Visual Studio Code y versionar en GitHub.
+Aplicación local en español para explorar seno, coseno y tangente. No requiere cuenta, internet, servidor de datos ni bibliotecas externas. El código se puede editar en Visual Studio Code y versionar en GitHub.
 
 ## 1. Abrir y ejecutar
 
@@ -17,11 +17,11 @@ No hace falta `npm install`. Con Node instalado, `npm test` ejecuta las pruebas 
 - Fórmulas editables: `2sen(x)`, `cos(2x)`, `3sen(2x-pi)+1`, `tan(x/2)`, `sen(x)^2+cos(x)^2`.
 - Operaciones `+ - * / ^`, multiplicación implícita, números con punto decimal, `x`, `pi` o `π`; aliases `sin`, `sen`, `tan`, `tg`.
 - Secante, cosecante y cotangente: `sec(x)`, `cosec(x)` (o `csc`) y `cotg(x)` (o `cot`, `ctg`). Quedan sin definir donde se anula su denominador.
-- Controles para A, B, h y D en `A·función(B·(x-h))+D`.
+- Controles para A, B, h y D en `A·función(B·(x-h))+D`. Debajo de cada control se lee en vivo qué propiedad cambia (amplitud o escala vertical, período, desplazamiento, línea media) y el indicador modificado se resalta.
 - Grados y radianes; comparación con la función base; acercar y alejar el eje horizontal.
 - Escenario animado con un personaje propio, círculo unitario y seno, coseno y tangente simultáneos. Comparte A, B, h, D, unidades y reloj con el gráfico.
 - Pausa, recorrido manual con teclado o deslizador, curvas que se pueden ocultar y descarga PNG del escenario.
-- Cuatro experiencias guiadas: una vuelta, amplitud, frecuencia y puntos excluidos de tangente, con preguntas y devolución.
+- Seis experiencias guiadas: una vuelta, amplitud, frecuencia, puntos excluidos de tangente, desplazamiento y línea media, con preguntas y devolución.
 - Punto animado que recorre la curva y muestra sus coordenadas. El cursor también permite inspeccionar puntos.
 - Amplitud, período, desfasaje y línea media para una única función trigonométrica con transformaciones lineales.
 - Asíntotas verticales para tangente en esa forma; sus ramas no se unen a través de las discontinuidades.
@@ -30,8 +30,10 @@ No hace falta `npm install`. Con Node instalado, `npm test` ejecuta las pruebas 
   - Recíprocas: `cosec(x) = 1/sen(x)`, `sec(x) = 1/cos(x)` y `cotg(x) = 1/tan(x)`.
   - De cociente: `tan(x) = sen(x)/cos(x)` y `cotg(x) = cos(x)/sen(x)`.
   - Ángulo doble: `sen(2x) = 2 sen(x) cos(x)` y `cos(2x) = cos²(x) − sen²(x)`.
-- Cinco desafíos de construcción de funciones, con comprobación y contador por sesión.
+- Desafíos de construcción de funciones: cinco fijos y después generados al azar. La comprobación indica qué parámetro falta ajustar (función, amplitud, período, desfasaje o traslado); contador por sesión.
 - Tabla de valores, exportación CSV y descarga PNG de la gráfica.
+- Tema claro y oscuro en toda la aplicación, incluidos los gráficos. El borrador de «Mi explicación» se guarda en el navegador del alumno.
+- Sin conexión real en la versión publicada: después de la primera visita, un service worker guarda la app y sigue funcionando sin internet. Desde el celular se puede «Agregar a la pantalla de inicio» y abrirla como aplicación. Con internet siempre se usa la versión publicada más reciente.
 - Diseño adaptable a computadora y celular; guía integrada.
 
 Los indicadores automáticos se calculan para `A·sen(Bx+C)+D`, `A·cos(Bx+C)+D` y `A·tan(Bx+C)+D`. Otras expresiones, incluidas secante, cosecante y cotangente, se grafican, pero no se les asignan automáticamente esos indicadores. Mover un control reemplaza una expresión libre por la función de los controles.
