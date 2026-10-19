@@ -10,6 +10,10 @@
   }
   try{const saved=localStorage.getItem('trigolab-theme');if(['system','dark','light'].includes(saved))el('theme').value=saved;}catch{}
   el('theme').onchange=theme;media.addEventListener('change',theme);theme();
+  // Borrador de la explicación guardado en este navegador, para no perderlo si la página se recarga.
+  const draft=el('student-explanation');
+  try{draft.value=localStorage.getItem('trigolab-explicacion')||draft.value;}catch{}
+  draft.addEventListener('input',()=>{try{localStorage.setItem('trigolab-explicacion',draft.value);}catch{}});
 
   el('share-class').onclick=async()=>{
     const info=el('share-info');info.textContent='Buscando el enlace de esta sesión…';el('share-dialog').showModal();

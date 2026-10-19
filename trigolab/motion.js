@@ -15,8 +15,12 @@
     {title:'01 · Una vuelta', A:1,B:1,h:0,D:0, question:'En una vuelta completa del círculo, ¿cuántas ondas completas dibuja el seno?', answers:['Una','Dos','Media'], correct:0, why:'Una vuelta son 2π radianes (360°). El seno vuelve a repetir sus valores después de esa vuelta.'},
     {title:'02 · Más altura', A:2,B:1,h:0,D:0, question:'Ahora A = 2. ¿Qué cambió respecto de A = 1?', answers:['El período se duplicó','La amplitud se duplicó','La onda se movió a la derecha'], correct:1, why:'El seno y el coseno llegan a 2 y −2. Su período sigue siendo 2π. En tangente hablamos de escala vertical, no de amplitud.'},
     {title:'03 · Más vueltas', A:1,B:2,h:0,D:0, question:'Con B = 2, ¿qué ocurre mientras x avanza de 0 a 2π?', answers:['El círculo gira media vuelta','El círculo no gira','El círculo gira dos vueltas'], correct:2, why:'El ángulo es θ = 2x: gira el doble. Seno y coseno completan dos ondas; su período es π.'},
-    {title:'04 · El salto', A:1,B:1,h:0,D:0, question:'En θ = π/2 (90°), ¿qué pasa con la tangente?', answers:['Vale cero','No está definida','Vale uno'], correct:1, why:'tan(θ) = sen(θ)/cos(θ). Allí cos(θ) = 0: no podemos dividir por cero. Las ramas quedan separadas.'}
+    {title:'04 · El salto', A:1,B:1,h:0,D:0, question:'En θ = π/2 (90°), ¿qué pasa con la tangente?', answers:['Vale cero','No está definida','Vale uno'], correct:1, why:'tan(θ) = sen(θ)/cos(θ). Allí cos(θ) = 0: no podemos dividir por cero. Las ramas quedan separadas.'},
+    {title:'05 · Corrimiento', A:1,B:1,h:Math.PI/2,D:0, question:'Con h = π/2 (90°), ¿hacia dónde se movió la onda del seno respecto de sen(x)?', answers:['A la izquierda','A la derecha','Hacia arriba'], correct:1, why:'En A·sen(B·(x − h)) + D, h positivo corre la gráfica hacia la derecha. El seno ahora vale 0 en x = π/2: su ciclo empieza allí. El período sigue siendo 2π.'},
+    {title:'06 · Línea media', A:1,B:1,h:0,D:1, question:'Con D = 1, ¿entre qué valores oscila el seno?', answers:['Entre −1 y 1','Entre 0 y 2','Entre 1 y 3'], correct:1, why:'D sube toda la gráfica una unidad: la línea media pasa a y = 1 y la onda va de 0 a 2. La amplitud sigue siendo 1.'}
   ];
+  // h de cada experiencia está en radianes; se convierte si el escenario está en grados.
+  const lessonShift=(lesson,unit)=>lesson.h*(unit==='deg'?180/Math.PI:1);
   function surface(id) {
     const canvas=el(id), rect=canvas.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
     if(!rect.width)return null;
@@ -107,7 +111,7 @@
     state=next;
     if(el('motion-body').hidden)return;
     const p=state.p;
-    const lessonChanged=currentLesson&&(!p||Math.abs(p.A-currentLesson.A)>1e-8||Math.abs(p.B-currentLesson.B)>1e-8||Math.abs(p.C)>1e-8||Math.abs(p.D-currentLesson.D)>1e-8);
+    const lessonChanged=currentLesson&&(!p||Math.abs(p.A-currentLesson.A)>1e-8||Math.abs(p.B-currentLesson.B)>1e-8||Math.abs(p.C+currentLesson.B*lessonShift(currentLesson,state.unit))>1e-8||Math.abs(p.D-currentLesson.D)>1e-8);
     el('motion-lesson-status').textContent=lessonChanged?'Cambiaste los parámetros. Volvé a elegir la experiencia para responder sobre ese ejemplo.':'';
     for(const choice of el('motion-answers').children)choice.disabled=!!lessonChanged||document.body.dataset.recording==='true';
     el('motion-unavailable').hidden=!!p;el('motion-visuals').hidden=!p;
@@ -161,7 +165,7 @@
     lessons.forEach((lesson,index)=>{
       const button=document.createElement('button');button.textContent=lesson.title;button.className='lesson-button';button.onclick=()=>{
         for(const child of el('motion-lessons').children)child.setAttribute('aria-pressed',String(child===button));
-        currentLesson=lesson;actions.preset(lesson,index);el('motion-question').textContent=lesson.question;
+        currentLesson=lesson;actions.preset({...lesson,h:lessonShift(lesson,state?state.unit:'rad')},index);el('motion-question').textContent=lesson.question;
         el('motion-feedback').textContent='Elegí una respuesta y comprobala con la animación.';
         el('motion-answers').replaceChildren();
         lesson.answers.forEach((answer,i)=>{const choice=document.createElement('button');choice.textContent=answer;choice.className='secondary';choice.onclick=()=>{el('motion-feedback').textContent=(i===lesson.correct?'¡Exacto! ':'Probá otra vez. ')+(i===lesson.correct?lesson.why:'Observá el círculo y las curvas; podés pausar y mover x.');};el('motion-answers').append(choice);});
